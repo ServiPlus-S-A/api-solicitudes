@@ -56,18 +56,17 @@ El claim `iss` del token debe coincidir con `JWT_KONG_ISSUER` (por defecto `trac
 ## Tests locales
 
 ```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
-./mvnw test verify
-open target/site/jacoco/index.html
+./gradlew test check
+open build/reports/jacoco/test/html/index.html
 ```
 
-Perfil `test,inmemory` — sin PostgreSQL, Redis ni Docker.
+Perfil `test,inmemory` — sin PostgreSQL, Redis ni Docker. JaCoCo exige 100% de cobertura de línea en `domain` y `application`.
 
 ## Perfiles Spring
 
 | Perfil | Uso |
 |--------|-----|
-| `inmemory` | `./mvnw test`, dev ligero |
+| `inmemory` | `./gradlew test`, dev ligero |
 | `jpa` | `docker compose` |
 
 ## Estructura `infrastructure/`

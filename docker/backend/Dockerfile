@@ -1,15 +1,16 @@
 # syntax=docker/dockerfile:1
 
-FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
+FROM gradle:8.14.3-jdk21-alpine AS builder
 WORKDIR /build
-COPY pom.xml .
+COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
+COPY gradle ./gradle
 COPY src ./src
-RUN mvn -q -DskipTests package
+RUN ./gradlew -q bootJar -x test
 
 FROM eclipse-temurin:21.0.7_6-jre-alpine AS runtime
 RUN apk add --no-cache wget && addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
-COPY --from=builder /build/target/solicitudes-service-*.jar app.jar
+COPY --from=builder /build/build/libs/solicitudes-service-*.jar app.jar
 USER appuser
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
