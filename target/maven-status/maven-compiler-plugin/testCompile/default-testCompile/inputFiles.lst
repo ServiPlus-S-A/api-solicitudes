@@ -1,0 +1,10 @@
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/application/service/AuditServiceTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/application/service/CacheServiceTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/application/service/FileServiceTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/application/service/MetricServiceTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/application/service/NotificationServiceTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/application/service/SolicitudServiceTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/domain/exception/DomainExceptionsTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/domain/model/DomainModelTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/domain/service/SolicitudDomainServiceTest.java
+/Users/andresperea/development/uni/software1/traceability/solicitudes/src/test/java/com/traceability/solicitudes/infrastructure/security/TestSecurityConfig.java

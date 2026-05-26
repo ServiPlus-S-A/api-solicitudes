@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">traceability-solicitudes-service</a> &gt; <a href="index.source.html" class="el_package">com.traceability.solicitudes.application.service</a> &gt; <span class="el_source">FileService.java</span></div><h1>FileService.java</h1><pre class="source lang-java linenums">package com.traceability.solicitudes.application.service;
+
+import com.traceability.solicitudes.application.port.FileRepositoryPort;
+import com.traceability.solicitudes.application.port.FileStoragePort;
+import com.traceability.solicitudes.application.port.SolicitudRepositoryPort;
+import com.traceability.solicitudes.domain.exception.SolicitudNotFoundException;
+import com.traceability.solicitudes.domain.model.ArchivoAdjunto;
+import com.traceability.solicitudes.domain.model.Solicitud;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
+
+@Service
+public class FileService {
+
+    private final SolicitudRepositoryPort solicitudRepository;
+    private final FileRepositoryPort fileRepository;
+    private final FileStoragePort fileStorage;
+
+    public FileService(
+            SolicitudRepositoryPort solicitudRepository,
+            FileRepositoryPort fileRepository,
+<span class="fc" id="L25">            FileStoragePort fileStorage) {</span>
+<span class="fc" id="L26">        this.solicitudRepository = solicitudRepository;</span>
+<span class="fc" id="L27">        this.fileRepository = fileRepository;</span>
+<span class="fc" id="L28">        this.fileStorage = fileStorage;</span>
+<span class="fc" id="L29">    }</span>
+
+    @CircuitBreaker(name = &quot;externalStorage&quot;)
+    public ArchivoAdjunto upload(UUID solicitudId, String nombreArchivo, String contentType, byte[] content) {
+<span class="fc" id="L33">        Solicitud solicitud = solicitudRepository</span>
+<span class="fc" id="L34">                .findById(solicitudId)</span>
+<span class="fc" id="L35">                .orElseThrow(() -&gt; new SolicitudNotFoundException(solicitudId));</span>
+
+<span class="fc" id="L37">        String storageKey = &quot;solicitudes/&quot; + solicitud.getId() + &quot;/&quot; + UUID.randomUUID();</span>
+<span class="fc" id="L38">        String storedKey = fileStorage.store(storageKey, content, contentType);</span>
+
+<span class="fc" id="L40">        ArchivoAdjunto archivo = new ArchivoAdjunto(</span>
+<span class="fc" id="L41">                UUID.randomUUID(),</span>
+                solicitudId,
+                nombreArchivo,
+                contentType,
+                storedKey,
+<span class="fc" id="L46">                Instant.now());</span>
+
+<span class="fc" id="L48">        return fileRepository.save(archivo);</span>
+    }
+
+    public List&lt;ArchivoAdjunto&gt; listBySolicitud(UUID solicitudId) {
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (solicitudRepository.findById(solicitudId).isEmpty()) {</span>
+<span class="fc" id="L53">            throw new SolicitudNotFoundException(solicitudId);</span>
+        }
+<span class="fc" id="L55">        return fileRepository.findBySolicitudId(solicitudId);</span>
+    }
+
+    public byte[] download(UUID archivoId) {
+<span class="fc" id="L59">        ArchivoAdjunto archivo = fileRepository</span>
+<span class="fc" id="L60">                .findById(archivoId)</span>
+<span class="fc" id="L61">                .orElseThrow(() -&gt; new SolicitudNotFoundException(archivoId));</span>
+<span class="fc" id="L62">        return fileStorage.retrieve(archivo.getStorageKey());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

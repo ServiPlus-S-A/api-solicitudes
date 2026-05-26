@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SolicitudService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">traceability-solicitudes-service</a> &gt; <a href="index.source.html" class="el_package">com.traceability.solicitudes.application.service</a> &gt; <span class="el_source">SolicitudService.java</span></div><h1>SolicitudService.java</h1><pre class="source lang-java linenums">package com.traceability.solicitudes.application.service;
+
+import com.traceability.solicitudes.application.command.CreateSolicitudCommand;
+import com.traceability.solicitudes.application.port.SolicitudRepositoryPort;
+import com.traceability.solicitudes.domain.exception.SolicitudNotFoundException;
+import com.traceability.solicitudes.domain.model.Solicitud;
+import com.traceability.solicitudes.domain.model.SolicitudEstado;
+import com.traceability.solicitudes.domain.service.SolicitudDomainService;
+import com.traceability.solicitudes.infrastructure.cache.CacheNames;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+@Service
+public class SolicitudService {
+
+    private final SolicitudRepositoryPort solicitudRepository;
+    private final SolicitudDomainService domainService;
+    private final CacheService cacheService;
+    private final AuditService auditService;
+    private final NotificationService notificationService;
+
+    public SolicitudService(
+            SolicitudRepositoryPort solicitudRepository,
+            SolicitudDomainService domainService,
+            CacheService cacheService,
+            AuditService auditService,
+<span class="fc" id="L30">            NotificationService notificationService) {</span>
+<span class="fc" id="L31">        this.solicitudRepository = solicitudRepository;</span>
+<span class="fc" id="L32">        this.domainService = domainService;</span>
+<span class="fc" id="L33">        this.cacheService = cacheService;</span>
+<span class="fc" id="L34">        this.auditService = auditService;</span>
+<span class="fc" id="L35">        this.notificationService = notificationService;</span>
+<span class="fc" id="L36">    }</span>
+
+    public Solicitud create(CreateSolicitudCommand command, String actorUserId) {
+<span class="fc" id="L39">        domainService.validateForCreate(command.titulo(), command.descripcion(), command.solicitanteId());</span>
+
+<span class="fc" id="L41">        Instant now = Instant.now();</span>
+<span class="fc" id="L42">        Solicitud solicitud = new Solicitud(</span>
+<span class="fc" id="L43">                UUID.randomUUID(),</span>
+<span class="fc" id="L44">                command.titulo(),</span>
+<span class="fc" id="L45">                command.descripcion(),</span>
+<span class="fc" id="L46">                command.solicitanteId(),</span>
+                SolicitudEstado.ENVIADA,
+                now,
+                now);
+
+<span class="fc" id="L51">        Solicitud saved = solicitudRepository.save(solicitud);</span>
+<span class="fc" id="L52">        cacheService.evictMetricas();</span>
+<span class="fc" id="L53">        auditService.logCreate(actorUserId, saved.getId().toString(), saved.getTitulo());</span>
+<span class="fc" id="L54">        notificationService.notifySolicitudCreated(</span>
+<span class="fc" id="L55">                command.solicitanteId(), saved.getId().toString(), saved.getTitulo());</span>
+<span class="fc" id="L56">        return saved;</span>
+    }
+
+    @Cacheable(value = CacheNames.SOLICITUD, key = &quot;#id&quot;)
+    public Solicitud getById(UUID id) {
+<span class="fc" id="L61">        return solicitudRepository.findById(id).orElseThrow(() -&gt; new SolicitudNotFoundException(id));</span>
+    }
+
+    public List&lt;Solicitud&gt; list(int page, int size) {
+<span class="fc" id="L65">        return solicitudRepository.findAll(page, size);</span>
+    }
+
+    public Solicitud updateEstado(UUID id, SolicitudEstado nuevoEstado, String actorUserId) {
+<span class="fc" id="L69">        Solicitud existing = solicitudRepository.findById(id).orElseThrow(() -&gt; new SolicitudNotFoundException(id));</span>
+<span class="fc" id="L70">        domainService.validateStateTransition(existing, nuevoEstado);</span>
+
+<span class="fc" id="L72">        SolicitudEstado anterior = existing.getEstado();</span>
+<span class="fc" id="L73">        Solicitud updated = existing.withEstado(nuevoEstado, Instant.now());</span>
+<span class="fc" id="L74">        Solicitud saved = solicitudRepository.save(updated);</span>
+
+<span class="fc" id="L76">        cacheService.evictSolicitud(id);</span>
+<span class="fc" id="L77">        cacheService.evictMetricas();</span>
+<span class="fc" id="L78">        auditService.logStateChange(actorUserId, id.toString(), anterior.name(), nuevoEstado.name());</span>
+<span class="fc" id="L79">        return saved;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

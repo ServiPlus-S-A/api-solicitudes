@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JpaSolicitudRepositoryAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">traceability-solicitudes-service</a> &gt; <a href="index.source.html" class="el_package">com.traceability.solicitudes.infrastructure.persistence.jpa</a> &gt; <span class="el_source">JpaSolicitudRepositoryAdapter.java</span></div><h1>JpaSolicitudRepositoryAdapter.java</h1><pre class="source lang-java linenums">package com.traceability.solicitudes.infrastructure.persistence.jpa;
+
+import com.traceability.solicitudes.application.port.SolicitudRepositoryPort;
+import com.traceability.solicitudes.domain.model.Solicitud;
+import com.traceability.solicitudes.domain.model.SolicitudEstado;
+import com.traceability.solicitudes.infrastructure.persistence.jpa.entity.SolicitudEntity;
+import com.traceability.solicitudes.infrastructure.persistence.jpa.repository.SolicitudJpaRepository;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Repository;
+
+@Repository
+@Profile(&quot;jpa&quot;)
+public class JpaSolicitudRepositoryAdapter implements SolicitudRepositoryPort {
+
+    private final SolicitudJpaRepository jpaRepository;
+
+<span class="nc" id="L22">    public JpaSolicitudRepositoryAdapter(SolicitudJpaRepository jpaRepository) {</span>
+<span class="nc" id="L23">        this.jpaRepository = jpaRepository;</span>
+<span class="nc" id="L24">    }</span>
+
+    @Override
+    public Solicitud save(Solicitud solicitud) {
+<span class="nc" id="L28">        SolicitudEntity saved = jpaRepository.save(SolicitudEntity.fromDomain(solicitud));</span>
+<span class="nc" id="L29">        return saved.toDomain();</span>
+    }
+
+    @Override
+    public Optional&lt;Solicitud&gt; findById(UUID id) {
+<span class="nc" id="L34">        return jpaRepository.findById(id).map(SolicitudEntity::toDomain);</span>
+    }
+
+    @Override
+    public List&lt;Solicitud&gt; findAll(int page, int size) {
+<span class="nc" id="L39">        return jpaRepository</span>
+<span class="nc" id="L40">                .findAllByOrderByCreadoEnDesc(PageRequest.of(page, size, Sort.by(&quot;creadoEn&quot;).descending()))</span>
+<span class="nc" id="L41">                .stream()</span>
+<span class="nc" id="L42">                .map(SolicitudEntity::toDomain)</span>
+<span class="nc" id="L43">                .toList();</span>
+    }
+
+    @Override
+    public long count() {
+<span class="nc" id="L48">        return jpaRepository.count();</span>
+    }
+
+    @Override
+    public long countByEstado(SolicitudEstado estado) {
+<span class="nc" id="L53">        return jpaRepository.countByEstado(estado);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

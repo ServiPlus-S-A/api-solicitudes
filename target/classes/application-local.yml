@@ -1,0 +1,5 @@
+# Perfil local: sin JPA activo (Sprint 0 — decisión B)
+spring:
+  config:
+    activate:
+      on-profile: local

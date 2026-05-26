@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>S3StorageConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">traceability-solicitudes-service</a> &gt; <a href="index.source.html" class="el_package">com.traceability.solicitudes.infrastructure.storage</a> &gt; <span class="el_source">S3StorageConfig.java</span></div><h1>S3StorageConfig.java</h1><pre class="source lang-java linenums">package com.traceability.solicitudes.infrastructure.storage;
+
+import com.traceability.solicitudes.infrastructure.config.StorageProperties;
+import java.net.URI;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+
+@Configuration
+@Profile(&quot;jpa&quot;)
+<span class="nc" id="L18">public class S3StorageConfig {</span>
+
+    @Bean
+    public S3Client s3Client(StorageProperties properties) {
+<span class="nc" id="L22">        S3Client client = S3Client.builder()</span>
+<span class="nc" id="L23">                .endpointOverride(URI.create(properties.endpoint()))</span>
+<span class="nc" id="L24">                .region(Region.of(properties.region()))</span>
+<span class="nc" id="L25">                .credentialsProvider(StaticCredentialsProvider.create(</span>
+<span class="nc" id="L26">                        AwsBasicCredentials.create(properties.accessKey(), properties.secretKey())))</span>
+<span class="nc" id="L27">                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())</span>
+<span class="nc" id="L28">                .build();</span>
+<span class="nc" id="L29">        ensureBucketExists(client, properties.bucket());</span>
+<span class="nc" id="L30">        return client;</span>
+    }
+
+    private static void ensureBucketExists(S3Client client, String bucket) {
+        try {
+<span class="nc" id="L35">            client.headBucket(HeadBucketRequest.builder().bucket(bucket).build());</span>
+<span class="nc" id="L36">        } catch (Exception ex) {</span>
+<span class="nc" id="L37">            client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());</span>
+<span class="nc" id="L38">        }</span>
+<span class="nc" id="L39">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

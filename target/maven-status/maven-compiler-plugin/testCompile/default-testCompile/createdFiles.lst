@@ -1,0 +1,10 @@
+com/traceability/solicitudes/application/service/FileServiceTest.class
+com/traceability/solicitudes/domain/service/SolicitudDomainServiceTest.class
+com/traceability/solicitudes/infrastructure/security/TestSecurityConfig.class
+com/traceability/solicitudes/application/service/CacheServiceTest.class
+com/traceability/solicitudes/application/service/SolicitudServiceTest.class
+com/traceability/solicitudes/domain/model/DomainModelTest.class
+com/traceability/solicitudes/application/service/MetricServiceTest.class
+com/traceability/solicitudes/domain/exception/DomainExceptionsTest.class
+com/traceability/solicitudes/application/service/AuditServiceTest.class
+com/traceability/solicitudes/application/service/NotificationServiceTest.class

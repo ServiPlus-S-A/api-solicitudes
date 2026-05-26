@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ArchivoAdjuntoEntity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">traceability-solicitudes-service</a> &gt; <a href="index.source.html" class="el_package">com.traceability.solicitudes.infrastructure.persistence.jpa.entity</a> &gt; <span class="el_source">ArchivoAdjuntoEntity.java</span></div><h1>ArchivoAdjuntoEntity.java</h1><pre class="source lang-java linenums">package com.traceability.solicitudes.infrastructure.persistence.jpa.entity;
+
+import com.traceability.solicitudes.domain.model.ArchivoAdjunto;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Table(name = &quot;archivos_adjuntos&quot;)
+public class ArchivoAdjuntoEntity {
+
+    @Id
+    private UUID id;
+
+    @Column(name = &quot;solicitud_id&quot;, nullable = false)
+    private UUID solicitudId;
+
+    @Column(name = &quot;nombre_archivo&quot;, nullable = false)
+    private String nombreArchivo;
+
+    @Column(name = &quot;content_type&quot;, nullable = false)
+    private String contentType;
+
+    @Column(name = &quot;storage_key&quot;, nullable = false)
+    private String storageKey;
+
+    @Column(name = &quot;subido_en&quot;, nullable = false)
+    private Instant subidoEn;
+
+<span class="nc" id="L33">    protected ArchivoAdjuntoEntity() {</span>
+<span class="nc" id="L34">    }</span>
+
+    public ArchivoAdjuntoEntity(
+            UUID id,
+            UUID solicitudId,
+            String nombreArchivo,
+            String contentType,
+            String storageKey,
+<span class="nc" id="L42">            Instant subidoEn) {</span>
+<span class="nc" id="L43">        this.id = id;</span>
+<span class="nc" id="L44">        this.solicitudId = solicitudId;</span>
+<span class="nc" id="L45">        this.nombreArchivo = nombreArchivo;</span>
+<span class="nc" id="L46">        this.contentType = contentType;</span>
+<span class="nc" id="L47">        this.storageKey = storageKey;</span>
+<span class="nc" id="L48">        this.subidoEn = subidoEn;</span>
+<span class="nc" id="L49">    }</span>
+
+    public static ArchivoAdjuntoEntity fromDomain(ArchivoAdjunto archivo) {
+<span class="nc" id="L52">        return new ArchivoAdjuntoEntity(</span>
+<span class="nc" id="L53">                archivo.getId(),</span>
+<span class="nc" id="L54">                archivo.getSolicitudId(),</span>
+<span class="nc" id="L55">                archivo.getNombreArchivo(),</span>
+<span class="nc" id="L56">                archivo.getContentType(),</span>
+<span class="nc" id="L57">                archivo.getStorageKey(),</span>
+<span class="nc" id="L58">                archivo.getSubidoEn());</span>
+    }
+
+    public ArchivoAdjunto toDomain() {
+<span class="nc" id="L62">        return new ArchivoAdjunto(id, solicitudId, nombreArchivo, contentType, storageKey, subidoEn);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>S3FileStorageAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">traceability-solicitudes-service</a> &gt; <a href="index.source.html" class="el_package">com.traceability.solicitudes.infrastructure.storage</a> &gt; <span class="el_source">S3FileStorageAdapter.java</span></div><h1>S3FileStorageAdapter.java</h1><pre class="source lang-java linenums">package com.traceability.solicitudes.infrastructure.storage;
+
+import com.traceability.solicitudes.application.port.FileStoragePort;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
+@Component
+@Profile(&quot;jpa&quot;)
+public class S3FileStorageAdapter implements FileStoragePort {
+
+    private final S3Client s3Client;
+    private final String bucket;
+
+<span class="nc" id="L19">    public S3FileStorageAdapter(S3Client s3Client, com.traceability.solicitudes.infrastructure.config.StorageProperties properties) {</span>
+<span class="nc" id="L20">        this.s3Client = s3Client;</span>
+<span class="nc" id="L21">        this.bucket = properties.bucket();</span>
+<span class="nc" id="L22">    }</span>
+
+    @Override
+    public String store(String objectKey, byte[] content, String contentType) {
+<span class="nc" id="L26">        s3Client.putObject(</span>
+<span class="nc" id="L27">                PutObjectRequest.builder()</span>
+<span class="nc" id="L28">                        .bucket(bucket)</span>
+<span class="nc" id="L29">                        .key(objectKey)</span>
+<span class="nc" id="L30">                        .contentType(contentType)</span>
+<span class="nc" id="L31">                        .build(),</span>
+<span class="nc" id="L32">                RequestBody.fromBytes(content));</span>
+<span class="nc" id="L33">        return objectKey;</span>
+    }
+
+    @Override
+    public byte[] retrieve(String storageKey) {
+        try {
+<span class="nc" id="L39">            return s3Client</span>
+<span class="nc" id="L40">                    .getObject(GetObjectRequest.builder().bucket(bucket).key(storageKey).build())</span>
+<span class="nc" id="L41">                    .readAllBytes();</span>
+<span class="nc" id="L42">        } catch (NoSuchKeyException ex) {</span>
+<span class="nc" id="L43">            throw new IllegalArgumentException(&quot;Archivo no encontrado en storage: &quot; + storageKey, ex);</span>
+<span class="nc" id="L44">        } catch (Exception ex) {</span>
+<span class="nc" id="L45">            throw new IllegalStateException(&quot;Error leyendo archivo del bucket&quot;, ex);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
