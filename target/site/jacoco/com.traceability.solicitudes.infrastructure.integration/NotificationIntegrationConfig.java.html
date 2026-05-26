@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationIntegrationConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">traceability-solicitudes-service</a> &gt; <a href="index.source.html" class="el_package">com.traceability.solicitudes.infrastructure.integration</a> &gt; <span class="el_source">NotificationIntegrationConfig.java</span></div><h1>NotificationIntegrationConfig.java</h1><pre class="source lang-java linenums">package com.traceability.solicitudes.infrastructure.integration;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.integration.channel.DirectChannel;
+import org.springframework.integration.config.EnableIntegration;
+import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.dsl.context.IntegrationFlowContext;
+import org.springframework.integration.mail.dsl.Mail;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.messaging.MessageChannel;
+
+@Configuration
+@EnableIntegration
+<span class="nc" id="L16">public class NotificationIntegrationConfig {</span>
+
+    @Bean
+    @Profile(&quot;jpa&quot;)
+    public MessageChannel smtpOutboundChannel() {
+<span class="nc" id="L21">        return new DirectChannel();</span>
+    }
+
+    @Bean
+    @Profile(&quot;jpa&quot;)
+    public IntegrationFlow smtpOutboundFlow(MessageChannel smtpOutboundChannel, JavaMailSender mailSender) {
+<span class="nc" id="L27">        return IntegrationFlow.from(smtpOutboundChannel)</span>
+<span class="nc" id="L28">                .handle(Mail.outboundAdapter(mailSender), spec -&gt; spec.id(&quot;smtpOutboundHandler&quot;))</span>
+<span class="nc" id="L29">                .get();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

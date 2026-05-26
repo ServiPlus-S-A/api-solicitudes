@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ArchivoAdjunto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">traceability-solicitudes-service</a> &gt; <a href="index.source.html" class="el_package">com.traceability.solicitudes.domain.model</a> &gt; <span class="el_source">ArchivoAdjunto.java</span></div><h1>ArchivoAdjunto.java</h1><pre class="source lang-java linenums">package com.traceability.solicitudes.domain.model;
+
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
+
+public class ArchivoAdjunto {
+
+    private final UUID id;
+    private final UUID solicitudId;
+    private final String nombreArchivo;
+    private final String contentType;
+    private final String storageKey;
+    private final Instant subidoEn;
+
+    public ArchivoAdjunto(
+            UUID id,
+            UUID solicitudId,
+            String nombreArchivo,
+            String contentType,
+            String storageKey,
+<span class="fc" id="L22">            Instant subidoEn) {</span>
+<span class="fc" id="L23">        this.id = id;</span>
+<span class="fc" id="L24">        this.solicitudId = solicitudId;</span>
+<span class="fc" id="L25">        this.nombreArchivo = nombreArchivo;</span>
+<span class="fc" id="L26">        this.contentType = contentType;</span>
+<span class="fc" id="L27">        this.storageKey = storageKey;</span>
+<span class="fc" id="L28">        this.subidoEn = subidoEn;</span>
+<span class="fc" id="L29">    }</span>
+
+    public UUID getId() {
+<span class="fc" id="L32">        return id;</span>
+    }
+
+    public UUID getSolicitudId() {
+<span class="fc" id="L36">        return solicitudId;</span>
+    }
+
+    public String getNombreArchivo() {
+<span class="fc" id="L40">        return nombreArchivo;</span>
+    }
+
+    public String getContentType() {
+<span class="fc" id="L44">        return contentType;</span>
+    }
+
+    public String getStorageKey() {
+<span class="fc" id="L48">        return storageKey;</span>
+    }
+
+    public Instant getSubidoEn() {
+<span class="fc" id="L52">        return subidoEn;</span>
+    }
+
+    @Override
+    public boolean equals(Object o) {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (this == o) {</span>
+<span class="fc" id="L58">            return true;</span>
+        }
+<span class="fc bfc" id="L60" title="All 4 branches covered.">        if (o == null || getClass() != o.getClass()) {</span>
+<span class="fc" id="L61">            return false;</span>
+        }
+<span class="fc" id="L63">        ArchivoAdjunto that = (ArchivoAdjunto) o;</span>
+<span class="fc" id="L64">        return Objects.equals(id, that.id);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L69">        return Objects.hash(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

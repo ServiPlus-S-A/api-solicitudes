@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+python3 scripts/generate-dev-jwt.py "$@"
