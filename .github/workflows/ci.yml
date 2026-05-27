@@ -64,7 +64,7 @@ jobs:
           fi
           project_code=$(curl -s -o /tmp/sonar_project.json -w "%{http_code}" \
             -u "${SONAR_TOKEN}:" \
-            "https://sonarcloud.io/api/projects/search?projects=ServiPlus-S-A_api-solicitudes")
+            "https://sonarcloud.io/api/projects/search?organization=serviplus-s-a&projects=ServiPlus-S-A_api-solicitudes")
           if [ "$project_code" != "200" ]; then
             echo "::error::Cannot access project ServiPlus-S-A_api-solicitudes (HTTP ${project_code})."
             cat /tmp/sonar_project.json 2>/dev/null || true
