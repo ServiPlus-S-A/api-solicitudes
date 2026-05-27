@@ -84,13 +84,16 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_KEY: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || '' }}
+          PR_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || '' }}
+          PR_BASE: ${{ github.event_name == 'pull_request' && github.base_ref || '' }}
         run: |
           SONAR_ARGS=()
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ -n "$PR_KEY" ]; then
             SONAR_ARGS+=(
-              "-Dsonar.pullrequest.key=${{ github.event.pull_request.number }}"
-              "-Dsonar.pullrequest.branch=${ }}"
-              "-Dsonar.pullrequest.base=${{ github.base_ref }}"
+              "-Dsonar.pullrequest.key=${PR_KEY}"
+              "-Dsonar.pullrequest.branch=${PR_BRANCH}"
+              "-Dsonar.pullrequest.base=${PR_BASE}"
             )
           fi
           ./gradlew check sonar --no-daemon "${SONAR_ARGS[@]}"
