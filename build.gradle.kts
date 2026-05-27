@@ -82,11 +82,8 @@ sonar {
     properties {
         property("sonar.projectKey", "ServiPlus-S-A_api-solicitudes")
         property("sonar.organization", "serviplus-s-a")
-        property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.scanner.skipJreProvisioning", "true")
         property("sonar.java.coveragePlugin", "jacoco")
         property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
-        property("sonar.qualitygate.wait", "true")
         property(
             "sonar.exclusions",
             "**/build/**,**/docker/**,**/scripts/**,**/target/**",

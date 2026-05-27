@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    types: [opened, synchronize, reopened]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -15,7 +15,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  build-test-sonar:
+  build:
+    name: Build and analyze
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,35 +31,66 @@ jobs:
           java-version: "21"
           cache: gradle
 
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Run tests and JaCoCo coverage
+        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
         run: ./gradlew check --no-daemon
 
-      - name: Validate SonarCloud token
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      - name: Validate SonarCloud setup
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           if [ -z "$SONAR_TOKEN" ]; then
-            echo "::error::SONAR_TOKEN is empty. Add a repository secret (Settings → Secrets → Actions) with a token from https://sonarcloud.io/account/security"
+            echo "::error::SONAR_TOKEN is empty. Create it from SonarCloud → Project → Administration → Analysis Method → GitHub Actions."
             exit 1
           fi
-          http_code=$(curl -s -o /tmp/sonar_validate.json -w "%{http_code}" \
+          validate_code=$(curl -s -o /tmp/sonar_validate.json -w "%{http_code}" \
             -u "${SONAR_TOKEN}:" \
             "https://sonarcloud.io/api/authentication/validate")
-          if [ "$http_code" != "200" ]; then
-            echo "::error::SonarCloud rejected SONAR_TOKEN (HTTP ${http_code}). Regenerate the token at https://sonarcloud.io/account/security and ensure the token owner belongs to organization serviplus-s-a with Execute Analysis on this project."
+          if [ "$validate_code" != "200" ]; then
+            echo "::error::Invalid SONAR_TOKEN (HTTP ${validate_code})."
             cat /tmp/sonar_validate.json 2>/dev/null || true
             exit 1
           fi
-          echo "SonarCloud token is valid."
+          project_code=$(curl -s -o /tmp/sonar_project.json -w "%{http_code}" \
+            -u "${SONAR_TOKEN}:" \
+            "https://sonarcloud.io/api/projects/search?projects=ServiPlus-S-A_api-solicitudes")
+          if [ "$project_code" != "200" ]; then
+            echo "::error::Cannot access project ServiPlus-S-A_api-solicitudes (HTTP ${project_code})."
+            cat /tmp/sonar_project.json 2>/dev/null || true
+            exit 1
+          fi
+          if ! grep -q '"ServiPlus-S-A_api-solicitudes"' /tmp/sonar_project.json; then
+            echo "::error::Project ServiPlus-S-A_api-solicitudes not found for this token. Import the repo in SonarCloud (org serviplus-s-a) and use a token from Analysis Method → GitHub Actions."
+            cat /tmp/sonar_project.json
+            exit 1
+          fi
+          echo "SonarCloud token and project are accessible."
 
-      - name: SonarQube Cloud analysis
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      - name: Test, coverage, and SonarCloud analysis
+        if: |
+          (github.ref == 'refs/heads/main' || github.event_name == 'pull_request') &&
+          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew sonar --no-daemon -Dsonar.token="${SONAR_TOKEN}"
+        run: |
+          SONAR_ARGS=()
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SONAR_ARGS+=(
+              "-Dsonar.pullrequest.key=${{ github.event.pull_request.number }}"
+              "-Dsonar.pullrequest.branch=${{ github.head_ref }}"
+              "-Dsonar.pullrequest.base=${{ github.base_ref }}"
+            )
+          fi
+          ./gradlew check sonar --no-daemon "${SONAR_ARGS[@]}"

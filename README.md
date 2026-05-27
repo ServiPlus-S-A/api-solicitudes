@@ -64,29 +64,25 @@ Perfil `test,inmemory` — sin PostgreSQL, Redis ni Docker. JaCoCo exige 100% de
 
 ## CI/CD (GitHub Actions)
 
-El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en `push` y `pull_request` hacia `main` y `develop`:
+El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) sigue el método **GitHub Actions** de SonarCloud:
 
-1. **Gradle** — `./gradlew check` (tests unitarios + verificación JaCoCo al 100% en `domain` y `application`).
-2. **SonarQube Cloud** — `./gradlew sonar` (análisis estático, cobertura JaCoCo y quality gate).
+| Evento | Acción |
+|--------|--------|
+| Push a `develop` | `./gradlew check` (tests + JaCoCo) |
+| Push a `main` | `./gradlew check sonar` |
+| Pull request | `./gradlew check sonar` (con metadatos de PR) |
 
 ### Secretos requeridos en GitHub
 
 | Secreto | Uso |
 |---------|-----|
-| `SONAR_TOKEN` | Token de SonarCloud con permiso *Execute analysis* ([generar aquí](https://sonarcloud.io/account/security)) |
+| `SONAR_TOKEN` | Token desde SonarCloud → **Administration** → **Analysis Method** → **GitHub Actions** |
 
-Proyecto SonarCloud: `ServiPlus-S-A_api-solicitudes` (organización `serviplus-s-a`). El análisis en PRs de forks se omite si no hay token disponible en el fork.
+Proyecto: `ServiPlus-S-A_api-solicitudes` (org `serviplus-s-a`). El workflow valida que el token pueda ver ese proyecto antes de analizar.
 
-**Si Sonar falla con HTTP 403**, el workflow valida el token antes del análisis. Causas habituales:
+En el plan **Free** de SonarCloud, el análisis de ramas adicionales (p. ej. `develop`) en la UI de Sonar es limitado; los tests en `develop` siguen ejecutándose en CI.
 
-1. El secreto está vacío o en un *environment* que el workflow no usa (debe ser secreto de **repositorio** o de org con acceso a este repo).
-2. El token no es de SonarCloud (`https://sonarcloud.io/account/security`), no de SonarQube Server ni un PAT de GitHub.
-3. El usuario que creó el token no tiene **Execute Analysis** (y **Browse**) en el proyecto en SonarCloud.
-4. Token expirado o con espacios al copiar — regenerar y actualizar el secreto `SONAR_TOKEN`.
-
-Recomendado: en SonarCloud → proyecto → **Administration** → **Analysis Method** → **GitHub Actions**, copiar el token y las claves que muestra esa pantalla.
-
-Análisis local con Sonar (opcional):
+Análisis local:
 
 ```bash
 export SONAR_TOKEN=<tu-token>
