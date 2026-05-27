@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.sonarqube)
     java
     jacoco
 }
@@ -75,4 +76,23 @@ tasks.jacocoTestCoverageVerification {
 
 tasks.check {
     dependsOn(tasks.jacocoTestCoverageVerification)
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "ServiPlus-S-A_api-solicitudes")
+        property("sonar.organization", "serviplus-s-a")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.java.coveragePlugin", "jacoco")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
+        property("sonar.qualitygate.wait", "true")
+        property(
+            "sonar.exclusions",
+            "**/build/**,**/docker/**,**/scripts/**,**/target/**",
+        )
+    }
+}
+
+tasks.named("sonar") {
+    dependsOn(tasks.check)
 }

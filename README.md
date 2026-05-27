@@ -62,6 +62,28 @@ open build/reports/jacoco/test/html/index.html
 
 Perfil `test,inmemory` — sin PostgreSQL, Redis ni Docker. JaCoCo exige 100% de cobertura de línea en `domain` y `application`.
 
+## CI/CD (GitHub Actions)
+
+El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en `push` y `pull_request` hacia `main` y `develop`:
+
+1. **Gradle** — `./gradlew check` (tests unitarios + verificación JaCoCo al 100% en `domain` y `application`).
+2. **SonarQube Cloud** — `./gradlew sonar` (análisis estático, cobertura JaCoCo y quality gate).
+
+### Secretos requeridos en GitHub
+
+| Secreto | Uso |
+|---------|-----|
+| `SONAR_TOKEN` | Token de SonarCloud con permiso *Execute analysis* ([generar aquí](https://sonarcloud.io/account/security)) |
+
+Proyecto SonarCloud: `ServiPlus-S-A_api-solicitudes` (organización `serviplus-s-a`). El análisis en PRs de forks se omite si no hay token disponible en el fork.
+
+Análisis local con Sonar (opcional):
+
+```bash
+export SONAR_TOKEN=<tu-token>
+./gradlew check sonar
+```
+
 ## Perfiles Spring
 
 | Perfil | Uso |
