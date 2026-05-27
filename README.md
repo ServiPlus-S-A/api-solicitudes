@@ -77,6 +77,15 @@ El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 
 Proyecto SonarCloud: `ServiPlus-S-A_api-solicitudes` (organización `serviplus-s-a`). El análisis en PRs de forks se omite si no hay token disponible en el fork.
 
+**Si Sonar falla con HTTP 403**, el workflow valida el token antes del análisis. Causas habituales:
+
+1. El secreto está vacío o en un *environment* que el workflow no usa (debe ser secreto de **repositorio** o de org con acceso a este repo).
+2. El token no es de SonarCloud (`https://sonarcloud.io/account/security`), no de SonarQube Server ni un PAT de GitHub.
+3. El usuario que creó el token no tiene **Execute Analysis** (y **Browse**) en el proyecto en SonarCloud.
+4. Token expirado o con espacios al copiar — regenerar y actualizar el secreto `SONAR_TOKEN`.
+
+Recomendado: en SonarCloud → proyecto → **Administration** → **Analysis Method** → **GitHub Actions**, copiar el token y las claves que muestra esa pantalla.
+
 Análisis local con Sonar (opcional):
 
 ```bash

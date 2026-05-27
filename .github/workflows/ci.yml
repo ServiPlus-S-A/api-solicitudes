@@ -36,9 +36,29 @@ jobs:
       - name: Run tests and JaCoCo coverage
         run: ./gradlew check --no-daemon
 
+      - name: Validate SonarCloud token
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "::error::SONAR_TOKEN is empty. Add a repository secret (Settings → Secrets → Actions) with a token from https://sonarcloud.io/account/security"
+            exit 1
+          fi
+          http_code=$(curl -s -o /tmp/sonar_validate.json -w "%{http_code}" \
+            -u "${SONAR_TOKEN}:" \
+            "https://sonarcloud.io/api/authentication/validate")
+          if [ "$http_code" != "200" ]; then
+            echo "::error::SonarCloud rejected SONAR_TOKEN (HTTP ${http_code}). Regenerate the token at https://sonarcloud.io/account/security and ensure the token owner belongs to organization serviplus-s-a with Execute Analysis on this project."
+            cat /tmp/sonar_validate.json 2>/dev/null || true
+            exit 1
+          fi
+          echo "SonarCloud token is valid."
+
       - name: SonarQube Cloud analysis
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew sonar --no-daemon
+        run: ./gradlew sonar --no-daemon -Dsonar.token="${SONAR_TOKEN}"
