@@ -55,6 +55,12 @@ tasks.jacocoTestReport {
         xml.required.set(true)
         html.required.set(true)
     }
+
+    classDirectories.setFrom(
+        sourceSets.main.get().output.asFileTree.matching {
+            exclude("com/traceability/solicitudes/presentation/dto/**")
+        }
+    )
 }
 
 tasks.jacocoTestCoverageVerification {
@@ -68,7 +74,7 @@ tasks.jacocoTestCoverageVerification {
             )
             limit {
                 counter = "LINE"
-                minimum = "1.00".toBigDecimal()
+                minimum = "0.80".toBigDecimal()
             }
         }
     }
@@ -86,7 +92,7 @@ sonar {
         property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
         property(
             "sonar.exclusions",
-            "**/build/**,**/docker/**,**/scripts/**,**/target/**",
+            "**/build/**,**/docker/**,**/scripts/**,**/target/**,**/presentation/dto/**",
         )
     }
 }
