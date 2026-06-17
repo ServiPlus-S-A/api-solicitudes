@@ -1,0 +1,60 @@
+name: Continuous Deployment (CD)
+
+on:
+  push:
+    # El despliegue se disparará automáticamente cuando hagas push a la rama principal
+    branches: [ main, master ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      # 1. AUTENTICACIÓN EN DOCKER HUB
+      - name: Iniciar sesión en Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 2. CONSTRUCCIÓN Y PUBLICACIÓN DE LA IMAGEN
+      # Nota: el Dockerfile es multi-stage y compila el .jar con Gradle dentro
+      # de la propia imagen (etapa "builder"), así que no hace falta compilar
+      # por fuera en el runner de GitHub Actions.
+      - name: Construir y subir imagen Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USER }}/api-solicitudes:latest
+            ${{ secrets.DOCKER_USER }}/api-solicitudes:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 3. DESPLIEGUE AUTOMÁTICO EN AWS EC2 VÍA SSH
+      - name: Desplegar en AWS EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            echo ">>> Conectado al EC2. Iniciando actualización del stack..."
+            cd /home/ubuntu
+            
+            echo ">>> Descargando la nueva imagen desde Docker Hub..."
+            docker compose pull solicitudes-api
+            
+            echo ">>> Recreando el contenedor de la API con la imagen nueva..."
+            docker compose up -d --remove-orphans --force-recreate solicitudes-api
+            
+            echo ">>> Limpiando imágenes antiguas para ahorrar espacio en disco..."
+            docker image prune -f
+            
+            echo ">>> Despliegue completado con éxito."

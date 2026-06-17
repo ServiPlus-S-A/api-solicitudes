@@ -1,25 +1,40 @@
-# Gradle
+# =====================================================================
+# GRADLE (Asegurando el Wrapper para GitHub Actions)
+# =====================================================================
 .gradle/
 build/
+!gradle/wrapper/gradle-wrapper.jar
 
-# Maven (legacy)
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-release.properties
+# =====================================================================
+# CONFIGURACIONES LOCALES Y SECRETOS (CRÍTICO PARA CD)
+# =====================================================================
+.env
+# Bloquear archivos de configuración locales que tengan credenciales de BD/AWS
+application-dev.yml
+application-test.yml
+application-local.yml
 
-# IDE
+# Tus llaves .pem para AWS (manteniendo el .gitkeep si lo necesitas)
+docker/keys/*.pem
+!docker/keys/.gitkeep
+
+# =====================================================================
+# IDEs (IntelliJ, VS Code, etc.)
+# =====================================================================
 .idea/
 *.iml
+*.iws
+*.ipr
+out/
 .vscode/
 *.swp
 .DS_Store
 
-# Env & keys (never commit secrets)
-.env
-docker/keys/*.pem
-!docker/keys/.gitkeep
-
-# Logs
+# =====================================================================
+# LOGS Y TEMPORALES
+# =====================================================================
 *.log
+logs/
+
+# Maven (Legacy por si acaso)
+target/

@@ -4,6 +4,7 @@ FROM gradle:8.14.3-jdk21-alpine AS builder
 WORKDIR /build
 COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle ./gradle
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 COPY src ./src
 RUN ./gradlew -q bootJar -x test
 

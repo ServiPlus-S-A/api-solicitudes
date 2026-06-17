@@ -26,7 +26,6 @@ public class S3StorageConfig {
                         AwsBasicCredentials.create(properties.accessKey(), properties.secretKey())))
                 .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
                 .build();
-        ensureBucketExists(client, properties.bucket());
         return client;
     }
 
