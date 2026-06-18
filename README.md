@@ -3,7 +3,9 @@
 Este repositorio contiene el **Microservicio de Gestión de Solicitudes** de la plataforma **ServiPlus**. El servicio está enfocado exclusivamente en la lógica de backend para la administración del ciclo de vida de las solicitudes de servicio, integrándose mediante llamadas resilientes a otros microservicios y exponiendo endpoints REST protegidos bajo autorización basada en roles (RBAC).
 
 Jhoan Sebastian Fernandez
+
 Andres Perea
+
 Nicolas Mosorongo
 
 ---
