@@ -2,6 +2,10 @@
 
 Este repositorio contiene el **Microservicio de Gestión de Solicitudes** de la plataforma **ServiPlus**. El servicio está enfocado exclusivamente en la lógica de backend para la administración del ciclo de vida de las solicitudes de servicio, integrándose mediante llamadas resilientes a otros microservicios y exponiendo endpoints REST protegidos bajo autorización basada en roles (RBAC).
 
+Jhoan Sebastian Fernandez
+Andres Perea
+Nicolas Mosorongo
+
 ---
 
 ## 1. Descripción del Proyecto
@@ -11,7 +15,7 @@ El microservicio de Gestión de Solicitudes permite a los usuarios registrar, co
 * **Framework principal**: Spring Boot 3.x
 * **Lenguaje**: Java 17 / 21
 * **Base de Datos**: PostgreSQL (Supabase en producción)
-* **Arquitectura**: Clean Architecture con diseño altamente desacoplado y de alta cohesión basado estrictamente en el UML optimizado (`image_fde7c3.png`).
+* **Arquitectura**: Clean Architecture con diseño altamente desacoplado y de alta cohesión.
 
 ---
 
