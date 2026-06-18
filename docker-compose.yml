@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: solicitudes_postgres
+    environment:
+      POSTGRES_DB: solicitudes_db
+      POSTGRES_USER: solicitudes_user
+      POSTGRES_PASSWORD: solicitudes_pass
+    ports:
+      - "3050:5432"
+    volumes:
+      - solicitudes_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U solicitudes_user -d solicitudes_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  solicitudes_data:
