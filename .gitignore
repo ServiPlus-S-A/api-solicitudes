@@ -9,6 +9,7 @@ build/
 application-dev.yml
 application-test.yml
 .env
+.secrets
 # STS
 .apt_generated
 .classpath
