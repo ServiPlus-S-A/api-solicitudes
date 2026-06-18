@@ -1,8 +1,8 @@
-name: Continuous Deployment (CD)
+name: CD - despliegue continuo
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
@@ -35,6 +35,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      #Copia tu archivo docker-compose.yml al servidor para que siempre esté actualizado
+      - name: Copiar docker-compose.yml al servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          source: "docker-compose.yml"
+          target: "/home/ubuntu/"
+
       - name: Desplegar en AWS EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -43,8 +54,12 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
+            set -e
             echo ">>> Conectado al EC2. Iniciando actualización del stack..."
             cd /home/ubuntu
+            
+            echo ">>> Autenticando en Docker Hub desde el servidor..."
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
             
             echo ">>> Descargando la nueva imagen desde Docker Hub..."
             docker compose pull solicitudes-api
@@ -55,6 +70,27 @@ jobs:
             echo ">>> Limpiando imágenes antiguas para ahorrar espacio..."
             docker image prune -f
             
-            echo ">>> Verificando el estado de la aplicación en el puerto seguro..."
-            sleep 20
-            curl -f http://localhost:9180/actuator/health && echo ">>> ¡DESPLIEGUE EXITOSO: API UP EN PUERTO 9180!"
+            echo ">>> Verificando el estado de la aplicación mediante reintentos dinámicos..."
+            set +e
+            
+            SUCCESS=0
+            for i in $(seq 1 12); do
+              # CORREGIDO: Se añade /api y flags de timeout seguro
+              STATUS=$(curl --max-time 5 -s -o /dev/null -w "%{http_code}" http://localhost:9180/api/actuator/health || echo "000")
+            
+              if [ "$STATUS" = "200" ]; then
+                echo ">>> ¡DESPLIEGUE EXITOSO: API UP EN PUERTO 9180 tras $i intento(s)!"
+                SUCCESS=1
+                break
+              fi
+            
+              echo "Intento $i/12 — HTTP Estado: $STATUS — Esperando 10 segundos..."
+              sleep 10
+            done
+            
+            if [ $SUCCESS -eq 0 ]; then
+              echo ">>> ERROR: El servicio no respondió con HTTP 200 tras 2 minutos."
+              echo ">>> Mostrando últimas líneas de logs del contenedor para diagnóstico:"
+              docker compose logs --tail=50 solicitudes-api
+              exit 1
+            fi
