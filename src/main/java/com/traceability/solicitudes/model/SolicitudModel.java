@@ -1,20 +1,12 @@
 package com.traceability.solicitudes.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-/**
- * Entidad JPA representativa de una Solicitud de TraceAbility.
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -40,8 +32,9 @@ public class SolicitudModel {
     @Column(name = "descripcion", nullable = false, columnDefinition = "TEXT")
     private String descripcion;
 
+    @Builder.Default
     @Column(name = "estado", nullable = false, length = 20)
-    private String estado;
+    private String estado = "Pendiente";
 
     @Column(name = "fecha_apertura", nullable = false)
     private LocalDateTime fechaApertura;
@@ -49,6 +42,13 @@ public class SolicitudModel {
     @Column(name = "codigo_trazabilidad", unique = true, length = 20)
     private String codigoTrazabilidad;
 
-    @Column(name = "url_adjunto", length = 255)
-    private String urlAdjunto;
+    @Column(name = "ubicacion", nullable = false, length = 100)
+    private String ubicacion;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.fechaApertura == null) {
+            this.fechaApertura = LocalDateTime.now();
+        }
+    }
 }

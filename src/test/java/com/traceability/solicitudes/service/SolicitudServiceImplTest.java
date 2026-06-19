@@ -52,7 +52,6 @@ public class SolicitudServiceImplTest {
                 .idTipoServicio(2L)
                 .asunto("Soporte de Conexión")
                 .descripcion("Problemas con la red principal")
-                .urlAdjunto("http://bucket.supabase.com/file123.jpg")
                 .build();
 
         Mockito.when(clienteClient.obtenerCliente(1L)).thenReturn("Cliente 1 info");
@@ -72,7 +71,6 @@ public class SolicitudServiceImplTest {
         Assertions.assertEquals(100L, resultado.getId());
         Assertions.assertNotNull(resultado.getCodigoTrazabilidad());
         Assertions.assertTrue(resultado.getCodigoTrazabilidad().startsWith("TR-"));
-        Assertions.assertEquals("http://bucket.supabase.com/file123.jpg", resultado.getUrlAdjunto());
 
         Mockito.verify(clienteClient, Mockito.times(1)).obtenerCliente(1L);
         Mockito.verify(servicioClient, Mockito.times(1)).obtenerServicio(2L);
