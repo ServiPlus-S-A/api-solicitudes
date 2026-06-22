@@ -24,7 +24,9 @@ public class SolicitudMapper {
                 .asunto(dto.getAsunto())
                 .descripcion(dto.getDescripcion())
                 .estado(dto.getEstado() != null ? dto.getEstado() : "Pendiente")
-                .urlAdjunto(dto.getUrlAdjunto())
+                // 🚀 OJO: Si agregaste 'ubicacion' en tu SolicitudRequestDTO, descomenta la siguiente línea:
+                // .ubicacion(dto.getUbicacion())
+                // ❌ SE QUITA: .urlAdjunto(dto.getUrlAdjunto()) ya no va aquí
                 .build();
     }
 
@@ -46,7 +48,9 @@ public class SolicitudMapper {
                 .estado(entity.getEstado())
                 .fechaApertura(entity.getFechaApertura())
                 .codigoTrazabilidad(entity.getCodigoTrazabilidad())
-                .urlAdjunto(entity.getUrlAdjunto())
+                // 🚀 OJO: Si tu SolicitudResponseDTO maneja 'ubicacion', descomenta la siguiente línea:
+                // .ubicacion(entity.getUbicacion())
+                // ❌ SE QUITA: .urlAdjunto(entity.getUrlAdjunto()) ya no va aquí
                 .build();
     }
 }
