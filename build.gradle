@@ -83,7 +83,8 @@ jacocoTestReport {
                     'com/traceability/solicitudes/model/**',
                     'com/traceability/solicitudes/exception/**',
                     'com/traceability/solicitudes/controller/**',
-                    'com/traceability/solicitudes/SolicitudesApplication.class'
+                    'com/traceability/solicitudes/SolicitudesApplication.class',
+                    'com/traceability/solicitudes/dto/**'
             ])
         }))
     }
