@@ -73,24 +73,21 @@ public class HelperServicesTest {
     @Test
     void testSolicitudMapper() {
         SolicitudMapper mapper = new SolicitudMapper();
-        
+
         SolicitudRequestDTO request = SolicitudRequestDTO.builder()
                 .idCliente(1L)
                 .idTipoServicio(2L)
                 .asunto("Asunto")
                 .descripcion("Desc")
                 .estado("Pendiente")
-                .urlAdjunto("http://url")
                 .build();
-                
+
         SolicitudModel model = mapper.toEntity(request);
         Assertions.assertEquals(1L, model.getIdCliente());
-        Assertions.assertEquals("http://url", model.getUrlAdjunto());
 
         SolicitudResponseDTO response = mapper.toResponse(model);
         Assertions.assertEquals(1L, response.getIdCliente());
-        Assertions.assertEquals("http://url", response.getUrlAdjunto());
-        
+
         Assertions.assertNull(mapper.toEntity(null));
         Assertions.assertNull(mapper.toResponse(null));
     }
