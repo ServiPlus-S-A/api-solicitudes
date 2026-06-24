@@ -26,11 +26,11 @@ public class SecurityConfig {
     @Profile("dev")
     public SecurityFilterChain securityFilterChainDev(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Abre las puertas en tu PC
-                );
+            .csrf(csrf -> csrf.disable()) // NOSONAR
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .anyRequest().permitAll()
+            );
         return http.build();
     }
 
@@ -42,15 +42,14 @@ public class SecurityConfig {
     @Profile("!dev")
     public SecurityFilterChain securityFilterChainProd(HttpSecurity http) throws Exception {
         http
-                // NOSONAR: CSRF se deshabilita porque el microservicio es Stateless
-                .csrf(csrf -> csrf.disable()) // NOSONAR
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/actuator/**")
-                        .permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(new GatewayHeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            .csrf(csrf -> csrf.disable()) // NOSONAR
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/actuator/**")
+                .permitAll()
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(new GatewayHeaderAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
