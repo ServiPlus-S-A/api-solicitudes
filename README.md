@@ -3,7 +3,7 @@
 > Microservicio de gestión de solicitudes desarrollado con **Clean Architecture**, **Spring Boot 3** y buenas prácticas de ingeniería de software.
 
 ![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.x-brightgreen?logo=springboot)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-brightgreen?logo=springboot)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?logo=postgresql)
 ![Redis](https://img.shields.io/badge/Redis-7.x-red?logo=redis)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
@@ -33,7 +33,7 @@
 
 Puedes encontrar la documentación ampliada del proyecto, diagramas de clases, DER y el documento de arquitectura técnica en nuestro repositorio compartido de Google Drive:
 
-📁 [Acceder a Google Drive del Proyecto](https://drive.google.com)
+📁 [Acceder a Google Drive del Proyecto](https://drive.google.com/drive/u/0/folders/1D96ec5TUwWO3Y1StIQOz0mDU_mWvXsTZ)
 
 ---
 
@@ -44,9 +44,9 @@ Puedes encontrar la documentación ampliada del proyecto, diagramas de clases, D
 | Tecnología       | Versión           | Uso                                                          |
 |------------------|-------------------|--------------------------------------------------------------|
 | Java             | 21 (Amazon Corretto) | Lenguaje de programación principal (Modern Features)      |
-| Spring Boot      | 3.2.x+            | Framework base del ecosistema backend                        |
+| Spring Boot      | 3.4.2             | Framework base del ecosistema backend                        |
 | Flyway           | 9.x               | Gestión y control de versiones de bases de datos             |
-| Resilience4j     | 2.1.x             | Tolerancia a fallos e integración resiliente                 |
+| Resilience4j     | 2.2.0             | Tolerancia a fallos e integración resiliente                 |
 | Lombok           | —                 | Reducción de código boilerplate en DTOs y Entidades          |
 
 ### Infraestructura y Persistencia
