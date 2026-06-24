@@ -4,7 +4,9 @@ import com.traceability.solicitudes.exception.BusinessException;
 import com.traceability.solicitudes.exception.ResourceNotFoundException;
 import com.traceability.solicitudes.integration.ClienteClient;
 import com.traceability.solicitudes.integration.ServicioClient;
+import com.traceability.solicitudes.model.SolicitudEstados;
 import com.traceability.solicitudes.model.SolicitudModel;
+import com.traceability.solicitudes.repository.AsignacionRepository;
 import com.traceability.solicitudes.repository.SolicitudRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class SolicitudService {
     private static final Logger log = LoggerFactory.getLogger(SolicitudService.class);
 
     private final SolicitudRepository solicitudRepository;
+    private final AsignacionRepository asignacionRepository;
     private final ClienteClient clienteClient;
     private final ServicioClient servicioClient;
     private final NotificationService notificationService;
@@ -67,7 +70,7 @@ public class SolicitudService {
 
         solicitud.setFechaApertura(LocalDateTime.now(ZoneId.of("America/Bogota")));
         if (solicitud.getEstado() == null) {
-            solicitud.setEstado("Pendiente");
+            solicitud.setEstado(SolicitudEstados.PENDIENTE);
         }
 
         SolicitudModel creada = solicitudRepository.save(solicitud);
@@ -138,15 +141,63 @@ public class SolicitudService {
     }
 
     /**
-     * Obtiene una lista paginada de todas las solicitudes registradas.
+     * Obtiene el listado total de solicitudes sin restricciones de propiedad.
+     * Destinado al rol de coordinador (ADMIN).
      *
      * @param pageable Configuración de paginación
      * @return Página de resultados estructurada en SolicitudModel
      */
     @Transactional(readOnly = true)
-    public Page<SolicitudModel> obtenerTodos(Pageable pageable) {
-        log.info("Consultando todas las solicitudes paginadas: {}", pageable);
+    public Page<SolicitudModel> listarTodas(Pageable pageable) {
+        log.info("Consultando listado total de solicitudes (coordinador): {}", pageable);
         return solicitudRepository.findAll(pageable);
+    }
+
+    /**
+     * Cancela una solicitud del cliente cuando aún se encuentra pendiente y sin asignación.
+     *
+     * @param id        Identificador de la solicitud
+     * @param idCliente Identificador del cliente autenticado
+     * @return SolicitudModel actualizada a estado Cancelada
+     * @throws ResourceNotFoundException si la solicitud no existe
+     * @throws BusinessException         si no cumple las reglas de cancelación
+     */
+    @Transactional
+    @CacheEvict(value = "solicitudes", key = "'solicitud:' + #id")
+    public SolicitudModel cancelar(final Long id, final Long idCliente) {
+        log.info("Procesando cancelación de solicitud ID {} por cliente {}", id, idCliente);
+
+        SolicitudModel existente = solicitudRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Solicitud con id " + id + " no encontrada"
+                ));
+
+        if (!existente.getIdCliente().equals(idCliente)) {
+            throw new BusinessException("Solo el cliente propietario puede cancelar la solicitud");
+        }
+
+        if (!SolicitudEstados.PENDIENTE.equalsIgnoreCase(existente.getEstado())) {
+            throw new BusinessException(
+                    "Solo se puede cancelar una solicitud en estado PENDIENTE. Estado actual: "
+                            + existente.getEstado()
+            );
+        }
+
+        if (asignacionRepository.existsByIdSolicitud(id)) {
+            throw new BusinessException("No se puede cancelar una solicitud que ya fue asignada");
+        }
+
+        existente.setEstado(SolicitudEstados.CANCELADA);
+        SolicitudModel cancelada = solicitudRepository.save(existente);
+        metricService.incrementarContador("solicitudes.canceladas");
+
+        notificationService.enviarNotificacion(
+                "cliente_" + cancelada.getIdCliente() + "@traceability.com",
+                "Solicitud Cancelada",
+                "Su solicitud " + cancelada.getCodigoTrazabilidad() + " ha sido cancelada."
+        );
+
+        return cancelada;
     }
 
     /**

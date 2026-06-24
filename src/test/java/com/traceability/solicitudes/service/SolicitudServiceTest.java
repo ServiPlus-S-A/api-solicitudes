@@ -4,7 +4,9 @@ import com.traceability.solicitudes.exception.BusinessException;
 import com.traceability.solicitudes.exception.ResourceNotFoundException;
 import com.traceability.solicitudes.integration.ClienteClient;
 import com.traceability.solicitudes.integration.ServicioClient;
+import com.traceability.solicitudes.model.SolicitudEstados;
 import com.traceability.solicitudes.model.SolicitudModel;
+import com.traceability.solicitudes.repository.AsignacionRepository;
 import com.traceability.solicitudes.repository.SolicitudRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,9 @@ class SolicitudServiceTest {
 
     @Mock
     private SolicitudRepository solicitudRepository;
+
+    @Mock
+    private AsignacionRepository asignacionRepository;
 
     @Mock
     private ClienteClient clienteClient;
@@ -65,6 +70,7 @@ class SolicitudServiceTest {
         Assertions.assertNotNull(resultado);
         Assertions.assertEquals(100L, resultado.getId());
         Assertions.assertNotNull(resultado.getCodigoTrazabilidad());
+        Assertions.assertEquals(SolicitudEstados.PENDIENTE, resultado.getEstado());
         Mockito.verify(solicitudRepository, Mockito.times(1)).save(Mockito.any(SolicitudModel.class));
     }
 
@@ -126,14 +132,82 @@ class SolicitudServiceTest {
     }
 
     @Test
-    void givenPageable_whenObtenerTodos_thenReturnPage() {
+    void givenPageable_whenListarTodas_thenReturnPage() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
         Mockito.when(solicitudRepository.findAll(pageable)).thenReturn(page);
 
-        Page<SolicitudModel> resultado = solicitudService.obtenerTodos(pageable);
+        Page<SolicitudModel> resultado = solicitudService.listarTodas(pageable);
 
         Assertions.assertEquals(1, resultado.getTotalElements());
+    }
+
+    @Test
+    void givenPendingSolicitud_whenCancelar_thenReturnCancelada() {
+        Long id = 10L;
+        Long idCliente = 1L;
+        SolicitudModel solicitud = SolicitudModel.builder()
+                .id(id)
+                .idCliente(idCliente)
+                .codigoTrazabilidad("TR-ABC")
+                .estado(SolicitudEstados.PENDIENTE)
+                .build();
+
+        Mockito.when(solicitudRepository.findById(id)).thenReturn(Optional.of(solicitud));
+        Mockito.when(asignacionRepository.existsByIdSolicitud(id)).thenReturn(false);
+        Mockito.when(solicitudRepository.save(Mockito.any(SolicitudModel.class))).thenAnswer(invocation -> {
+            SolicitudModel model = invocation.getArgument(0);
+            return model;
+        });
+
+        SolicitudModel resultado = solicitudService.cancelar(id, idCliente);
+
+        Assertions.assertEquals(SolicitudEstados.CANCELADA, resultado.getEstado());
+        Mockito.verify(notificationService, Mockito.times(1)).enviarNotificacion(
+                Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+    }
+
+    @Test
+    void givenAssignedSolicitud_whenCancelar_thenThrowBusinessException() {
+        Long id = 10L;
+        SolicitudModel solicitud = SolicitudModel.builder()
+                .id(id)
+                .idCliente(1L)
+                .estado(SolicitudEstados.PENDIENTE)
+                .build();
+
+        Mockito.when(solicitudRepository.findById(id)).thenReturn(Optional.of(solicitud));
+        Mockito.when(asignacionRepository.existsByIdSolicitud(id)).thenReturn(true);
+
+        Assertions.assertThrows(BusinessException.class, () -> solicitudService.cancelar(id, 1L));
+    }
+
+    @Test
+    void givenProcessedSolicitud_whenCancelar_thenThrowBusinessException() {
+        Long id = 10L;
+        SolicitudModel solicitud = SolicitudModel.builder()
+                .id(id)
+                .idCliente(1L)
+                .estado("Resuelto")
+                .build();
+
+        Mockito.when(solicitudRepository.findById(id)).thenReturn(Optional.of(solicitud));
+
+        Assertions.assertThrows(BusinessException.class, () -> solicitudService.cancelar(id, 1L));
+    }
+
+    @Test
+    void givenDifferentOwner_whenCancelar_thenThrowBusinessException() {
+        Long id = 10L;
+        SolicitudModel solicitud = SolicitudModel.builder()
+                .id(id)
+                .idCliente(1L)
+                .estado(SolicitudEstados.PENDIENTE)
+                .build();
+
+        Mockito.when(solicitudRepository.findById(id)).thenReturn(Optional.of(solicitud));
+
+        Assertions.assertThrows(BusinessException.class, () -> solicitudService.cancelar(id, 99L));
     }
 
     @Test
