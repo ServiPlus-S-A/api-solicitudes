@@ -181,7 +181,7 @@ api-solicitudes/
 |--------|-----------------|-------------------------------------------------------------------------------------|
 | S0     | ✅ Completado   | Configuración de arquitectura base, Modelos JPA, Migraciones Flyway y Pipeline CI/CD inicial. |
 | S1     | ✅ Completado   | Implementación de Lógica de Solicitudes, Filtros de Seguridad y Pruebas Unitarias. |
-| S2     | 🏃 En Progreso  | Integración de Disyuntores (Resilience4j), Caché Híbrida L1/L2 y Testcontainers.  |
+| S2     | 🏃 En Progreso  | Integración de Disyuntores (Resilience4j), Caché Redis Declarativa y Testcontainers.  |
 | S3     | 🔜 Pendiente    | Optimización de infraestructura, auditorías SonarCloud y despliegue final en AWS EC2. |
 
 ---
