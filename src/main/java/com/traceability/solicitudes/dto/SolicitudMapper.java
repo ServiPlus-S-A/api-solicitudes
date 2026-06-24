@@ -48,7 +48,7 @@ public class SolicitudMapper {
                 .estado(entity.getEstado())
                 .fechaApertura(entity.getFechaApertura())
                 .codigoTrazabilidad(entity.getCodigoTrazabilidad())
-                // 🚀 OJO: Si tu SolicitudResponseDTO maneja 'ubicacion', descomenta la siguiente línea:
+                // 🚀 OJO: Si tu SolicitudResponseDTO manx|eja 'ubicacion', descomenta la siguiente línea:
                 // .ubicacion(entity.getUbicacion())
                 // ❌ SE QUITA: .urlAdjunto(entity.getUrlAdjunto()) ya no va aquí
                 .build();

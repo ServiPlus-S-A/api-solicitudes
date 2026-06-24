@@ -20,7 +20,7 @@ import org.springframework.mail.javamail.JavaMailSender;
  * Pruebas unitarias adicionales para los servicios auxiliares, clientes de integración y mapeadores.
  */
 @ExtendWith(MockitoExtension.class)
-public class HelperServicesTest {
+class HelperServicesTest { // 👈 Corregido: Se quitó el modificador 'public'
 
     @Test
     void testMetricService() {
@@ -46,8 +46,11 @@ public class HelperServicesTest {
     @Test
     void testNotificationServiceWithoutMailSender() {
         NotificationService notificationService = new NotificationService(null);
-        // Debe ejecutarse sin lanzar excepciones en simulación
-        notificationService.enviarNotificacion("test@dest.com", "Subject", "Body");
+
+        // 👈 Corregido: Se añade aserción explícita para asegurar que no arroje excepciones (java:S2699)
+        Assertions.assertDoesNotThrow(() ->
+                notificationService.enviarNotificacion("test@dest.com", "Subject", "Body")
+        );
     }
 
     @Test
