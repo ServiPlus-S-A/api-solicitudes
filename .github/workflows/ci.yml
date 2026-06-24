@@ -64,7 +64,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: "sk-no-key-required"
           CONFIG.MODEL: "gemini/gemini-2.0-flash"
-          CONFIG.FALLBACK_MODELS: '["gemini/gemini-1.5-flash"]'
+          CONFIG.FALLBACK_MODELS: '["gemini/gemini-2.0-flash-lite"]'
         with:
           pr_url: ${{ github.event.pull_request.html_url }}
 
