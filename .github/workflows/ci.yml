@@ -95,12 +95,3 @@ jobs:
           name: jacoco-report
           path: build/reports/jacoco/test/html/
           retention-days: 7
-
-      - name: Qodo — revisión automática del PR
-        uses: Codium-ai/pr-agent@main
-        if: github.event_name == 'pull_request'
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          pr_url: ${{ github.event.pull_request.html_url }}
