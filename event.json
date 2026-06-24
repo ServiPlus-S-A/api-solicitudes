@@ -1,0 +1,12 @@
+{
+  "pull_request": {
+    "number": 1,
+    "html_url": "https://github.com/ServiPlus-S-A/api-solicitudes/pull/1"
+  },
+  "repository": {
+    "name": "api-solicitudes",
+    "owner": {
+      "login": "ServiPlus-S-A"
+    }
+  }
+}

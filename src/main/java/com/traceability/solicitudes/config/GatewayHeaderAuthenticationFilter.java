@@ -47,21 +47,25 @@ public class GatewayHeaderAuthenticationFilter extends OncePerRequestFilter {
     private void procesarAutenticacion(String token) {
         try {
             String[] parts = token.split("\\.");
-            if (parts.length < 2) return;
+            if (parts.length < 2) {
+                return;
+            }
 
             String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            Map<String, Object> claims = OBJECT_MAPPER.readValue(payloadJson, new TypeReference<Map<String, Object>>() {});
+            Map<String, Object> claims = OBJECT_MAPPER.readValue(
+                    payloadJson, new TypeReference<Map<String, Object>>() {}
+            );
 
             Object rolesObj = claims.get("roles") != null ? claims.get("roles") : claims.get("authorities");
 
-            // CORRECCIÓN S6880: Reemplazamos la cadena de if/else por una expresión Switch con Pattern Matching
+            // Reemplazamos la cadena de if/else por una expresión Switch con Pattern Matching
             List<String> roles = switch (rolesObj) {
                 case List<?> list -> list.stream().map(Object::toString).toList();
                 case String roleStr -> Collections.singletonList(roleStr);
                 default -> Collections.emptyList();
             };
 
-            // CORRECCIÓN S6204: Cambiamos .collect(Collectors.toList()) por .toList() que es inmutable y limpio
+            // Cambiamos .collect(Collectors.toList()) por .toList() que es inmutable y limpio
             List<SimpleGrantedAuthority> authorities = roles.stream()
                     .map(role -> {
                         String cleanRole = role.toUpperCase();

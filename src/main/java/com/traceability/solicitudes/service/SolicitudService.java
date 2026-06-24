@@ -37,6 +37,14 @@ public class SolicitudService {
     private final NotificationService notificationService;
     private final MetricService metricService;
 
+    /**
+     * Procesa la creación de una nueva solicitud validando clientes y servicios remotos.
+     * Genera automáticamente un código único de trazabilidad si no se suministra uno.
+     *
+     * @param solicitud Modelo inicial enviado para el registro
+     * @return SolicitudModel guardada con éxito en la base de datos
+     * @throws BusinessException si el código de trazabilidad generado ya está registrado
+     */
     @Transactional
     @CircuitBreaker(name = "solicitudService")
     public SolicitudModel crear(final SolicitudModel solicitud) {
@@ -74,6 +82,14 @@ public class SolicitudService {
         return creada;
     }
 
+    /**
+     * Actualiza la información y el estado de una solicitud existente en el sistema.
+     * Desaloja el valor previo almacenado en la caché "solicitudes".
+     *
+     * @param solicitud Entidad con los datos modificados para actualizar
+     * @return SolicitudModel actualizada y guardada
+     * @throws ResourceNotFoundException si el identificador de la solicitud no existe
+     */
     @Transactional
     @CacheEvict(value = "solicitudes", key = "'solicitud:' + #solicitud.id")
     @CircuitBreaker(name = "solicitudService")
@@ -103,6 +119,13 @@ public class SolicitudService {
         return actualizada;
     }
 
+    /**
+     * Elimina el registro físico de una solicitud según su ID del sistema.
+     * Desaloja también la caché asignada a dicho registro.
+     *
+     * @param id Identificador único de la solicitud a borrar
+     * @throws ResourceNotFoundException si no se encuentra el ID
+     */
     @Transactional
     @CacheEvict(value = "solicitudes", key = "'solicitud:' + #id")
     public void eliminar(final Long id) {
@@ -114,12 +137,25 @@ public class SolicitudService {
         metricService.incrementarContador("solicitudes.eliminadas");
     }
 
+    /**
+     * Obtiene una lista paginada de todas las solicitudes registradas.
+     *
+     * @param pageable Configuración de paginación
+     * @return Página de resultados estructurada en SolicitudModel
+     */
     @Transactional(readOnly = true)
     public Page<SolicitudModel> obtenerTodos(Pageable pageable) {
         log.info("Consultando todas las solicitudes paginadas: {}", pageable);
         return solicitudRepository.findAll(pageable);
     }
 
+    /**
+     * Recupera una solicitud específica por su ID. Utiliza caché de Spring (L1/L2).
+     *
+     * @param id Identificador único de búsqueda
+     * @return SolicitudModel correspondiente
+     * @throws ResourceNotFoundException si el recurso solicitado no existe
+     */
     @Transactional(readOnly = true)
     @Cacheable(value = "solicitudes", key = "'solicitud:' + #id")
     public SolicitudModel obtenerPorId(Long id) {
@@ -128,16 +164,29 @@ public class SolicitudService {
                 .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada con id: " + id));
     }
 
+    /**
+     * Busca y pagina solicitudes asociadas a un cliente específico.
+     *
+     * @param idCliente Identificador de cliente para el filtrado
+     * @param pageable  Configuración de paginación
+     * @return Página con las solicitudes que coinciden con el cliente
+     */
     @Transactional(readOnly = true)
     public Page<SolicitudModel> buscarPorCliente(Long idCliente, Pageable pageable) {
         log.info("Consultando solicitudes por cliente ID {} paginado", idCliente);
         return solicitudRepository.findAllByIdCliente(idCliente, pageable);
     }
 
+    /**
+     * Filtra y obtiene solicitudes basadas en su estado actual.
+     *
+     * @param estado   Estado a buscar (ej: 'Pendiente', 'Resuelto')
+     * @param pageable Configuración de paginación
+     * @return Página con los resultados filtrados por estado
+     */
     @Transactional(readOnly = true)
     public Page<SolicitudModel> buscarPorEstado(String estado, Pageable pageable) {
         log.info("Consultando solicitudes por estado '{}' paginado", estado);
         return solicitudRepository.findAllByEstado(estado, pageable);
     }
-
 }
