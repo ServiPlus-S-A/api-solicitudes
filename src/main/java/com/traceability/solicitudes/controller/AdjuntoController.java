@@ -25,7 +25,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/adjuntos")
 @RequiredArgsConstructor
-@Tag(name = "Adjuntos", description = "Operaciones para la gestión aislada de archivos vinculados a las solicitudes")
+@Tag(name = "Adjuntos", description =
+        "Operaciones para la gestión aislada de archivos vinculados a las solicitudes")
 public class AdjuntoController {
 
     private final AdjuntoService adjuntoService;
@@ -36,7 +37,8 @@ public class AdjuntoController {
      * @return el DTO del adjunto guardado con estado HTTP 200
      */
     @PostMapping
-    @Operation(summary = "Cargar un nuevo adjunto", description = "Registra un archivo adjunto aislado vinculándolo a una solicitud")
+    @Operation(summary = "Cargar un nuevo adjunto",
+            description = "Registra un archivo adjunto aislado vinculándolo a una solicitud")
     @ApiResponse(responseCode = "201", description = "Adjunto creado con éxito")
     @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o fallos de validación")
     public ResponseEntity<AdjuntoDTO> subirAdjunto(@RequestBody AdjuntoDTO adjuntoDto) {
@@ -56,7 +58,8 @@ public class AdjuntoController {
      * @return lista de adjuntos transformados a DTOs
      */
     @GetMapping("/solicitud/{idSolicitud}")
-    @Operation(summary = "Listar adjuntos por solicitud", description = "Obtiene de forma aislada todos los adjuntos de una solicitud específica")
+    @Operation(summary = "Listar adjuntos por solicitud",
+            description = "Obtiene de forma aislada todos los adjuntos de una solicitud específica")
     @ApiResponse(responseCode = "200", description = "Lista de adjuntos devuelta exitosamente")
     @ApiResponse(responseCode = "404", description = "Solicitud no encontrada")
     public ResponseEntity<List<AdjuntoDTO>> listarPorSolicitud(@PathVariable Long idSolicitud) {

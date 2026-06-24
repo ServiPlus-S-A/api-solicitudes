@@ -64,6 +64,11 @@ public class SolicitudModel {
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AdjuntoModel> adjuntos = new ArrayList<>();
 
+
+    /**
+     * Método de ciclo de vida de JPA que se ejecuta antes de persistir la entidad.
+     * Asigna la fecha de apertura actual en la zona horaria de Bogotá si no ha sido establecida.
+     */
     @PrePersist
     protected void onCreate() {
         if (this.fechaApertura == null) {
@@ -71,6 +76,12 @@ public class SolicitudModel {
         }
     }
 
+    /**
+     * Agrega un archivo adjunto a la lista de la solicitud de forma bidireccional.
+     * Asegura que tanto la solicitud conozca el adjunto como el adjunto apunte a esta solicitud.
+     *
+     * @param adjunto el modelo del archivo adjunto a vincular
+     */
     public void addAdjunto(AdjuntoModel adjunto) {
         if (adjuntos == null) {
             adjuntos = new ArrayList<>();
