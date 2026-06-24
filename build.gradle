@@ -130,6 +130,8 @@ sonar {
         property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
         property 'sonar.exclusions', '**/config/**,**/model/**,**/exception/**,**/controller/**,**/*Application*'
         property 'sonar.java.source', '21'
+        property "sonar.pullrequest.provider", "GitHub"
+        property "sonar.pullrequest.github.repository", "ServiPlus-S-A/api-solicitudes"
     }
 }
 
