@@ -1,4 +1,4 @@
-name: CI — Integración Continua
+name: CI — Integración Continuada
 
 on:
   pull_request:
@@ -15,6 +15,7 @@ permissions:
   pull-requests: write
 
 jobs:
+
   ci:
     name: Build, Test y Calidad
     runs-on: ubuntu-latest
@@ -38,45 +39,14 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
 
-      - name: Cache de paquetes SonarCloud
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
       - name: Dar permisos al Gradle wrapper
         run: chmod +x gradlew
-
-      - name: Validar Token y Proyecto en SonarCloud
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          if [ -z "$SONAR_TOKEN" ]; then
-            echo "::error::SONAR_TOKEN está vacío."
-            exit 1
-          fi
-          validate_code=$(curl -s -o /tmp/sonar_validate.json -w "%{http_code}" \
-            -u "${SONAR_TOKEN}:" \
-            "https://sonarcloud.io/api/authentication/validate")
-          if [ "$validate_code" != "200" ]; then
-            echo "::error::Token de SonarCloud inválido."
-            exit 1
-          fi
 
       - name: Ejecutar Checkstyle
         run: ./gradlew checkstyleMain checkstyleTest
 
       - name: Pruebas Unitarias y Verificación de Cobertura (JaCoCo >= 80%)
         run: ./gradlew check --no-daemon
-
-      - name: Análisis de Calidad SonarCloud
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          # 💡 Al remover los flags manuales, el plugin detecta nativamente el contexto del PR en GitHub Actions
-          ./gradlew sonar --no-daemon
 
       - name: Publicar Reporte de Cobertura JaCoCo
         uses: actions/upload-artifact@v4
@@ -88,8 +58,46 @@ jobs:
 
       - name: Qodo — revisión automática del PR
         uses: Codium-ai/pr-agent@main
+        if: github.event_name == 'pull_request'
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          pr_url: ${{ github.event.pull_request.html_url }}
+          args: "--review"
+
+  sonar:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+
+      - name: Cache de dependencias y Sonar
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.sonar/cache
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Dar permisos al Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Generar reporte JaCoCo para SonarCloud
+        run: ./gradlew test jacocoTestReport -x checkstyleMain -x checkstyleTest
+
+      - name: Análisis SonarCloud
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar --no-daemon
