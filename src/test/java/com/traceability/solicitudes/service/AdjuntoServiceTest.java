@@ -1,6 +1,7 @@
 package com.traceability.solicitudes.service;
 
 import com.traceability.solicitudes.model.AdjuntoModel;
+import com.traceability.solicitudes.model.SolicitudModel;
 import com.traceability.solicitudes.repository.AdjuntoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,8 +35,10 @@ class AdjuntoServiceTest {
     @Test
     void cuandoGuardarAdjunto_entoncesRetornaAdjuntoGuardado() {
         // Arrange
+        SolicitudModel mockSolicitud = SolicitudModel.builder().id(1L).build();
+
         AdjuntoModel adjunto = AdjuntoModel.builder()
-                .idSolicitud(1L)
+                .solicitud(mockSolicitud)
                 .urlArchivo("https://supabase.com/storage/evidencia.pdf")
                 .tipoArchivo("PDF")
                 .build();
@@ -54,10 +57,12 @@ class AdjuntoServiceTest {
     @Test
     void cuandoObtenerPorSolicitud_entoncesRetornaListaDeAdjuntos() {
         // Arrange
-        AdjuntoModel adjunto1 = AdjuntoModel.builder().idSolicitud(1L).urlArchivo("url1").tipoArchivo("JPG").build();
-        AdjuntoModel adjunto2 = AdjuntoModel.builder().idSolicitud(1L).urlArchivo("url2").tipoArchivo("PNG").build();
+        SolicitudModel mockSolicitud = SolicitudModel.builder().id(1L).build();
 
-        when(adjuntoRepository.findByIdSolicitud(1L)).thenReturn(Arrays.asList(adjunto1, adjunto2));
+        AdjuntoModel adjunto1 = AdjuntoModel.builder().solicitud(mockSolicitud).urlArchivo("url1").tipoArchivo("JPG").build();
+        AdjuntoModel adjunto2 = AdjuntoModel.builder().solicitud(mockSolicitud).urlArchivo("url2").tipoArchivo("PNG").build();
+
+        when(adjuntoRepository.findBySolicitudId(1L)).thenReturn(Arrays.asList(adjunto1, adjunto2));
 
         // Act
         List<AdjuntoModel> resultado = adjuntoService.obtenerPorSolicitud(1L);
@@ -65,6 +70,6 @@ class AdjuntoServiceTest {
         // Assert
         assertNotNull(resultado);
         assertEquals(2, resultado.size());
-        verify(adjuntoRepository, times(1)).findByIdSolicitud(1L);
+        verify(adjuntoRepository, times(1)).findBySolicitudId(1L);
     }
 }

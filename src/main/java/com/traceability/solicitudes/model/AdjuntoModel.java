@@ -2,14 +2,18 @@ package com.traceability.solicitudes.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @Builder
@@ -24,8 +28,10 @@ public class AdjuntoModel {
     @Column(name = "id_adjunto")
     private Long id;
 
-    @Column(name = "id_solicitud", nullable = false)
-    private Long idSolicitud;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_solicitud", nullable = false)
+    @JsonIgnore
+    private SolicitudModel solicitud;
 
     @Column(name = "url_archivo", nullable = false, length = 255)
     private String urlArchivo;

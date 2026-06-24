@@ -17,5 +17,5 @@ public interface AdjuntoRepository extends JpaRepository<AdjuntoModel, Long> {
      * @param idSolicitud identificador de la solicitud
      * @return lista de adjuntos encontrados
      */
-    List<AdjuntoModel> findByIdSolicitud(Long idSolicitud);
+    List<AdjuntoModel> findBySolicitudId(Long idSolicitud);
 }

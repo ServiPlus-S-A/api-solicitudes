@@ -29,7 +29,7 @@ public record AdjuntoDTO(
         }
         return new AdjuntoDTO(
                 model.getId(),
-                model.getIdSolicitud(),
+                model.getSolicitud() != null ? model.getSolicitud().getId() : null,
                 model.getUrlArchivo(),
                 model.getTipoArchivo()
         );
@@ -43,7 +43,6 @@ public record AdjuntoDTO(
     public AdjuntoModel toEntity() {
         return AdjuntoModel.builder()
                 .id(this.id)
-                .idSolicitud(this.idSolicitud)
                 .urlArchivo(this.urlArchivo)
                 .tipoArchivo(this.tipoArchivo)
                 .build();

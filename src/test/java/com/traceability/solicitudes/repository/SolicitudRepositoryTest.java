@@ -1,6 +1,7 @@
 package com.traceability.solicitudes.repository;
 
 import com.traceability.solicitudes.BaseIntegrationTest;
+import com.traceability.solicitudes.model.EstadoSolicitud;
 import com.traceability.solicitudes.model.SolicitudModel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,14 +18,13 @@ class SolicitudRepositoryTest extends BaseIntegrationTest {
 
     @Test
     void givenSolicitudesInDb_whenFindAllByIdCliente_thenReturnFilteredPage() {
-        // Arrange - Se agregan campos obligatorios para cumplir restricciones NOT NULL
         SolicitudModel s1 = SolicitudModel.builder()
                 .idCliente(55L)
                 .idTipoServicio(1L)
                 .asunto("Fallo")
                 .descripcion("Descripción de prueba para falla de servicio")
                 .ubicacion("Cali")
-                .estado("Pendiente")
+                .estado(EstadoSolicitud.PENDIENTE)
                 .codigoTrazabilidad("TR-01")
                 .build();
 
@@ -34,7 +34,7 @@ class SolicitudRepositoryTest extends BaseIntegrationTest {
                 .asunto("Fallo 2")
                 .descripcion("Segunda descripción de prueba obligatoria")
                 .ubicacion("Cali")
-                .estado("Pendiente")
+                .estado(EstadoSolicitud.PENDIENTE)
                 .codigoTrazabilidad("TR-02")
                 .build();
 
@@ -51,14 +51,13 @@ class SolicitudRepositoryTest extends BaseIntegrationTest {
 
     @Test
     void givenCodigoTrazabilidad_whenFindByCodigoTrazabilidad_thenReturnSolicitud() {
-        // Arrange - Se agregan campos obligatorios para cumplir restricciones NOT NULL
         SolicitudModel s = SolicitudModel.builder()
                 .idCliente(1L)
                 .idTipoServicio(1L)
                 .asunto("Test")
                 .descripcion("Descripción obligatoria para búsqueda por trazabilidad")
                 .ubicacion("Cali")
-                .estado("Pendiente")
+                .estado(EstadoSolicitud.PENDIENTE)
                 .codigoTrazabilidad("TR-FIND")
                 .build();
 

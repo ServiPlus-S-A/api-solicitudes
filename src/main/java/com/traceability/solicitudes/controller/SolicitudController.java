@@ -54,10 +54,11 @@ public class SolicitudController {
     @ApiResponse(responseCode = "409", description = "Conflicto por código de trazabilidad duplicado")
     public ResponseEntity<SolicitudResponseDTO> crear(@Valid @RequestBody final SolicitudRequestDTO requestDTO) {
         log.info("REST solicitud para crear recurso por cliente: {}", requestDTO.getIdCliente());
-        SolicitudModel entity = solicitudMapper.toEntity(requestDTO);
-        SolicitudModel creada = solicitudService.crear(entity);
-        log.info("REST solicitud completada: ID {}", creada.getId());
-        return new ResponseEntity<>(solicitudMapper.toResponse(creada), HttpStatus.CREATED);
+
+        SolicitudResponseDTO respuesta = solicitudService.crear(requestDTO);
+
+        log.info("REST solicitud completada con éxito");
+        return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
     }
 
     /**

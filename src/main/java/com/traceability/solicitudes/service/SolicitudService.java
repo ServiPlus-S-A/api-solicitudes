@@ -1,9 +1,13 @@
 package com.traceability.solicitudes.service;
 
+import com.traceability.solicitudes.dto.SolicitudMapper;
+import com.traceability.solicitudes.dto.SolicitudRequestDTO;
+import com.traceability.solicitudes.dto.SolicitudResponseDTO;
 import com.traceability.solicitudes.exception.BusinessException;
 import com.traceability.solicitudes.exception.ResourceNotFoundException;
 import com.traceability.solicitudes.integration.ClienteClient;
 import com.traceability.solicitudes.integration.ServicioClient;
+import com.traceability.solicitudes.model.EstadoSolicitud;
 import com.traceability.solicitudes.model.SolicitudModel;
 import com.traceability.solicitudes.repository.SolicitudRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -36,24 +40,30 @@ public class SolicitudService {
     private final ServicioClient servicioClient;
     private final NotificationService notificationService;
     private final MetricService metricService;
+    private final SolicitudMapper solicitudMapper;
 
     /**
      * Procesa la creación de una nueva solicitud validando clientes y servicios remotos.
      * Genera automáticamente un código único de trazabilidad si no se suministra uno.
      *
-     * @param solicitud Modelo inicial enviado para el registro
+     * @param  dto Modelo inicial enviado para el registro
      * @return SolicitudModel guardada con éxito en la base de datos
      * @throws BusinessException si el código de trazabilidad generado ya está registrado
      */
     @Transactional
     @CircuitBreaker(name = "solicitudService")
-    public SolicitudModel crear(final SolicitudModel solicitud) {
-        log.info("Procesando creación de solicitud para cliente ID: {}", solicitud.getIdCliente());
+    public SolicitudResponseDTO crear(final SolicitudRequestDTO dto) {
+        log.info("Procesando creación de solicitud para cliente ID: {}", dto.getIdCliente());
 
-        String clienteInfo = clienteClient.obtenerCliente(solicitud.getIdCliente());
-        String servicioInfo = servicioClient.obtenerServicio(solicitud.getIdTipoServicio());
+        // Validacion externas
+        String clienteInfo = clienteClient.obtenerCliente(dto.getIdCliente());
+        String servicioInfo = servicioClient.obtenerServicio(dto.getIdTipoServicio());
         log.info("Validación externa exitosa: {} | {}", clienteInfo, servicioInfo);
 
+        // Convertir el dto a entidad usando Mapper
+        SolicitudModel solicitud = solicitudMapper.toEntity(dto);
+
+        // Lógica de generacion de códigos de trazabilidad
         if (solicitud.getCodigoTrazabilidad() == null || solicitud.getCodigoTrazabilidad().isBlank()) {
             solicitud.setCodigoTrazabilidad("TR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         }
@@ -67,19 +77,22 @@ public class SolicitudService {
 
         solicitud.setFechaApertura(LocalDateTime.now(ZoneId.of("America/Bogota")));
         if (solicitud.getEstado() == null) {
-            solicitud.setEstado("Pendiente");
+            solicitud.setEstado(EstadoSolicitud.PENDIENTE);
         }
 
+        // Guardado relacional en cascada (Guarda la solicitud y sus adjuntos juntos)
         SolicitudModel creada = solicitudRepository.save(solicitud);
         metricService.incrementarContador("solicitudes.creadas");
 
+        // Notificación de eventos
         notificationService.enviarNotificacion(
                 "cliente_" + creada.getIdCliente() + "@traceability.com",
                 "Registro de Solicitud Exitosa",
                 "Su solicitud con el código de trazabilidad " + creada.getCodigoTrazabilidad() + " ha sido guardada."
         );
 
-        return creada;
+        // Se retorna el dto de respuesta estructurado para el controller
+        return solicitudMapper.toResponse(creada);
     }
 
     /**
@@ -186,7 +199,7 @@ public class SolicitudService {
      */
     @Transactional(readOnly = true)
     public Page<SolicitudModel> buscarPorEstado(String estado, Pageable pageable) {
-        log.info("Consultando solicitudes por estado '{}' paginado", estado);
+        log.info("Consultando solicitudes por estado '{}' paginado", EstadoSolicitud.valueOf(estado.toUpperCase()));
         return solicitudRepository.findAllByEstado(estado, pageable);
     }
 }

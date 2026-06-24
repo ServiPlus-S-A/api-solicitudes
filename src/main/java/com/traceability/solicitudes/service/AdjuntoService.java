@@ -2,6 +2,7 @@ package com.traceability.solicitudes.service;
 
 import com.traceability.solicitudes.model.AdjuntoModel;
 import com.traceability.solicitudes.repository.AdjuntoRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ public class AdjuntoService {
      * @param adjunto el modelo del archivo adjunto a guardar
      * @return el archivo adjunto guardado con su respectivo ID
      */
+    @Transactional
     public AdjuntoModel guardarAdjunto(AdjuntoModel adjunto) {
         return adjuntoRepository.save(adjunto);
     }
@@ -30,7 +32,8 @@ public class AdjuntoService {
      * @param idSolicitud identificador único de la solicitud
      * @return lista de archivos adjuntos relacionados
      */
+    @Transactional(readOnly = true)
     public List<AdjuntoModel> obtenerPorSolicitud(Long idSolicitud) {
-        return adjuntoRepository.findByIdSolicitud(idSolicitud);
+        return adjuntoRepository.findBySolicitudId(idSolicitud);
     }
 }
