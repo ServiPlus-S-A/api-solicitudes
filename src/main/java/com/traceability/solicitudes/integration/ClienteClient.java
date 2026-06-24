@@ -1,11 +1,13 @@
 package com.traceability.solicitudes.integration;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
  * Cliente de integración para interactuar con el microservicio de Clientes.
  */
+@Slf4j
 @Component
 public class ClienteClient {
 
@@ -22,6 +24,7 @@ public class ClienteClient {
      * Método de fallback en caso de fallo o circuito abierto.
      */
     public String obtenerClienteFallback(Long idCliente, Throwable t) {
+        log.warn("Activado fallback para cliente ID: {} debido a: {}", idCliente, t.getMessage());
         return "Cliente ID: " + idCliente + " (Fallback - Servicio de Clientes fuera de servicio)";
     }
 }

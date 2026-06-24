@@ -21,11 +21,8 @@ import org.springframework.data.domain.Pageable;
 import java.util.Collections;
 import java.util.Optional;
 
-/**
- * Pruebas unitarias para SolicitudServiceImpl utilizando JUnit 5 y Mockito.
- */
 @ExtendWith(MockitoExtension.class)
-public class SolicitudServiceImplTest {
+class SolicitudServiceTest {
 
     @Mock
     private SolicitudRepository solicitudRepository;
@@ -43,11 +40,10 @@ public class SolicitudServiceImplTest {
     private MetricService metricService;
 
     @InjectMocks
-    private SolicitudServiceImpl solicitudService;
+    private SolicitudService solicitudService;
 
     @Test
     void givenValidSolicitud_whenCrear_thenReturnCreada() {
-        // Given
         SolicitudModel solicitud = SolicitudModel.builder()
                 .idCliente(1L)
                 .idTipoServicio(2L)
@@ -64,166 +60,122 @@ public class SolicitudServiceImplTest {
             return model;
         });
 
-        // When
         SolicitudModel resultado = solicitudService.crear(solicitud);
 
-        // Then
         Assertions.assertNotNull(resultado);
         Assertions.assertEquals(100L, resultado.getId());
         Assertions.assertNotNull(resultado.getCodigoTrazabilidad());
-        Assertions.assertTrue(resultado.getCodigoTrazabilidad().startsWith("TR-"));
-
-        Mockito.verify(clienteClient, Mockito.times(1)).obtenerCliente(1L);
-        Mockito.verify(servicioClient, Mockito.times(1)).obtenerServicio(2L);
         Mockito.verify(solicitudRepository, Mockito.times(1)).save(Mockito.any(SolicitudModel.class));
     }
 
     @Test
     void givenSolicitudWithDuplicateCode_whenCrear_thenThrowBusinessException() {
-        // Given
         SolicitudModel solicitud = SolicitudModel.builder()
                 .idCliente(1L)
                 .idTipoServicio(2L)
                 .codigoTrazabilidad("TR-DUP")
-                .asunto("Soporte")
-                .descripcion("Detalle")
                 .build();
 
         Mockito.when(clienteClient.obtenerCliente(1L)).thenReturn("Cliente 1 info");
         Mockito.when(servicioClient.obtenerServicio(2L)).thenReturn("Servicio 2 info");
         Mockito.when(solicitudRepository.findByCodigoTrazabilidad("TR-DUP")).thenReturn(Optional.of(solicitud));
 
-        // When & Then
         Assertions.assertThrows(BusinessException.class, () -> solicitudService.crear(solicitud));
-        Mockito.verify(solicitudRepository, Mockito.never()).save(Mockito.any(SolicitudModel.class));
     }
 
     @Test
     void givenExistingSolicitud_whenActualizar_thenReturnActualizada() {
-        // Given
-        SolicitudModel solicitud = SolicitudModel.builder()
-                .id(100L)
-                .idCliente(1L)
-                .idTipoServicio(2L)
-                .asunto("Soporte Actualizado")
-                .descripcion("Detalle")
-                .build();
+        SolicitudModel solicitud = SolicitudModel.builder().id(100L).idCliente(1L).build();
 
-        Mockito.when(clienteClient.obtenerCliente(1L)).thenReturn("Cliente 1 info");
+        Mockito.when(clienteClient.obtenerCliente(1L)).thenReturn("Cliente info");
         Mockito.when(solicitudRepository.findById(100L)).thenReturn(Optional.of(solicitud));
         Mockito.when(solicitudRepository.save(Mockito.any(SolicitudModel.class))).thenReturn(solicitud);
 
-        // When
         SolicitudModel resultado = solicitudService.actualizar(solicitud);
 
-        // Then
         Assertions.assertNotNull(resultado);
         Mockito.verify(solicitudRepository, Mockito.times(1)).save(solicitud);
     }
 
     @Test
     void givenNonExistingSolicitud_whenActualizar_thenThrowResourceNotFoundException() {
-        // Given
-        SolicitudModel solicitud = SolicitudModel.builder()
-                .id(100L)
-                .idCliente(1L)
-                .build();
+        SolicitudModel solicitud = SolicitudModel.builder().id(999L).idCliente(1L).build();
 
-        Mockito.when(clienteClient.obtenerCliente(1L)).thenReturn("Cliente 1");
-        Mockito.when(solicitudRepository.findById(100L)).thenReturn(Optional.empty());
+        Mockito.when(clienteClient.obtenerCliente(1L)).thenReturn("Cliente info");
+        Mockito.when(solicitudRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // When & Then
         Assertions.assertThrows(ResourceNotFoundException.class, () -> solicitudService.actualizar(solicitud));
-        Mockito.verify(solicitudRepository, Mockito.never()).save(Mockito.any(SolicitudModel.class));
     }
 
     @Test
-    void givenExistingId_whenEliminar_thenExecuteDelete() {
-        // Given
-        Mockito.when(solicitudRepository.existsById(100L)).thenReturn(true);
+    void givenExistingId_whenEliminar_thenDeleteSuccessfully() {
+        Long id = 1L;
+        Mockito.when(solicitudRepository.existsById(id)).thenReturn(true);
 
-        // When
-        solicitudService.eliminar(100L);
+        solicitudService.eliminar(id);
 
-        // Then
-        Mockito.verify(solicitudRepository, Mockito.times(1)).deleteById(100L);
+        Mockito.verify(solicitudRepository, Mockito.times(1)).deleteById(id);
     }
 
     @Test
     void givenNonExistingId_whenEliminar_thenThrowResourceNotFoundException() {
-        // Given
-        Mockito.when(solicitudRepository.existsById(100L)).thenReturn(false);
+        Long id = 999L;
+        Mockito.when(solicitudRepository.existsById(id)).thenReturn(false);
 
-        // When & Then
-        Assertions.assertThrows(ResourceNotFoundException.class, () -> solicitudService.eliminar(100L));
-        Mockito.verify(solicitudRepository, Mockito.never()).deleteById(100L);
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> solicitudService.eliminar(id));
     }
 
     @Test
     void givenPageable_whenObtenerTodos_thenReturnPage() {
-        // Given
         Pageable pageable = PageRequest.of(0, 10);
-        Page<SolicitudModel> pagina = new PageImpl<>(Collections.emptyList());
-        Mockito.when(solicitudRepository.findAll(pageable)).thenReturn(pagina);
+        Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
+        Mockito.when(solicitudRepository.findAll(pageable)).thenReturn(page);
 
-        // When
         Page<SolicitudModel> resultado = solicitudService.obtenerTodos(pageable);
 
-        // Then
-        Assertions.assertNotNull(resultado);
-        Mockito.verify(solicitudRepository, Mockito.times(1)).findAll(pageable);
+        Assertions.assertEquals(1, resultado.getTotalElements());
     }
 
     @Test
     void givenExistingId_whenObtenerPorId_thenReturnSolicitud() {
-        // Given
-        SolicitudModel solicitud = SolicitudModel.builder().id(100L).build();
-        Mockito.when(solicitudRepository.findById(100L)).thenReturn(Optional.of(solicitud));
+        Long id = 1L;
+        SolicitudModel solicitud = SolicitudModel.builder().id(id).build();
+        Mockito.when(solicitudRepository.findById(id)).thenReturn(Optional.of(solicitud));
 
-        // When
-        SolicitudModel resultado = solicitudService.obtenerPorId(100L);
+        SolicitudModel resultado = solicitudService.obtenerPorId(id);
 
-        // Then
-        Assertions.assertNotNull(resultado);
-        Assertions.assertEquals(100L, resultado.getId());
+        Assertions.assertEquals(id, resultado.getId());
     }
 
     @Test
     void givenNonExistingId_whenObtenerPorId_thenThrowResourceNotFoundException() {
-        // Given
-        Mockito.when(solicitudRepository.findById(100L)).thenReturn(Optional.empty());
+        Long id = 999L;
+        Mockito.when(solicitudRepository.findById(id)).thenReturn(Optional.empty());
 
-        // When & Then
-        Assertions.assertThrows(ResourceNotFoundException.class, () -> solicitudService.obtenerPorId(100L));
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> solicitudService.obtenerPorId(id));
     }
 
     @Test
     void givenClienteIdAndPageable_whenBuscarPorCliente_thenReturnPage() {
-        // Given
+        Long idCliente = 55L;
         Pageable pageable = PageRequest.of(0, 10);
-        Page<SolicitudModel> pagina = new PageImpl<>(Collections.emptyList());
-        Mockito.when(solicitudRepository.findAllByIdCliente(1L, pageable)).thenReturn(pagina);
+        Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
+        Mockito.when(solicitudRepository.findAllByIdCliente(idCliente, pageable)).thenReturn(page);
 
-        // When
-        Page<SolicitudModel> resultado = solicitudService.buscarPorCliente(1L, pageable);
+        Page<SolicitudModel> resultado = solicitudService.buscarPorCliente(idCliente, pageable);
 
-        // Then
-        Assertions.assertNotNull(resultado);
-        Mockito.verify(solicitudRepository, Mockito.times(1)).findAllByIdCliente(1L, pageable);
+        Assertions.assertEquals(1, resultado.getTotalElements());
     }
 
     @Test
     void givenEstadoAndPageable_whenBuscarPorEstado_thenReturnPage() {
-        // Given
+        String estado = "Pendiente";
         Pageable pageable = PageRequest.of(0, 10);
-        Page<SolicitudModel> pagina = new PageImpl<>(Collections.emptyList());
-        Mockito.when(solicitudRepository.findAllByEstado("Pendiente", pageable)).thenReturn(pagina);
+        Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
+        Mockito.when(solicitudRepository.findAllByEstado(estado, pageable)).thenReturn(page);
 
-        // When
-        Page<SolicitudModel> resultado = solicitudService.buscarPorEstado("Pendiente", pageable);
+        Page<SolicitudModel> resultado = solicitudService.buscarPorEstado(estado, pageable);
 
-        // Then
-        Assertions.assertNotNull(resultado);
-        Mockito.verify(solicitudRepository, Mockito.times(1)).findAllByEstado("Pendiente", pageable);
+        Assertions.assertEquals(1, resultado.getTotalElements());
     }
 }

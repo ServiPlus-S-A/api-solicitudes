@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Data
 @Builder
@@ -55,7 +56,7 @@ public class SolicitudModel {
     @PrePersist
     protected void onCreate() {
         if (this.fechaApertura == null) {
-            this.fechaApertura = LocalDateTime.now();
+            this.fechaApertura = LocalDateTime.now(ZoneId.of("America/Bogota"));
         }
     }
 }

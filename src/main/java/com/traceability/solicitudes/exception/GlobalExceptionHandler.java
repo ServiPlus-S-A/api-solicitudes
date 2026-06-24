@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String ZONE_BOGOTA = "America/Bogota";
 
     /**
      * Maneja excepciones de recurso no encontrado.
@@ -39,7 +41,7 @@ public class GlobalExceptionHandler {
                         .status(HttpStatus.NOT_FOUND.value())
                         .message(ex.getMessage())
                         .path(request.getRequestURI())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(LocalDateTime.now(ZoneId.of(ZONE_BOGOTA)))
                         .build());
     }
 
@@ -59,7 +61,7 @@ public class GlobalExceptionHandler {
                         .status(HttpStatus.CONFLICT.value())
                         .message(ex.getMessage())
                         .path(request.getRequestURI())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(LocalDateTime.now(ZoneId.of(ZONE_BOGOTA)))
                         .build());
     }
 
@@ -82,7 +84,7 @@ public class GlobalExceptionHandler {
                         .status(HttpStatus.BAD_REQUEST.value())
                         .message("Validación fallida: " + errors)
                         .path(request.getRequestURI())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(LocalDateTime.now(ZoneId.of(ZONE_BOGOTA)))
                         .build());
     }
 
@@ -102,7 +104,7 @@ public class GlobalExceptionHandler {
                         .status(HttpStatus.FORBIDDEN.value())
                         .message("Acceso denegado: no tiene privilegios suficientes para realizar esta acción")
                         .path(request.getRequestURI())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(LocalDateTime.now(ZoneId.of(ZONE_BOGOTA)))
                         .build());
     }
 
@@ -122,7 +124,7 @@ public class GlobalExceptionHandler {
                         .status(HttpStatus.SERVICE_UNAVAILABLE.value())
                         .message("Servicio temporalmente no disponible (Circuit Breaker abierto)")
                         .path(request.getRequestURI())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(LocalDateTime.now(ZoneId.of(ZONE_BOGOTA)))
                         .build());
     }
 
@@ -142,7 +144,7 @@ public class GlobalExceptionHandler {
                         .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                         .message("Error interno del servidor. Contacte soporte.")
                         .path(request.getRequestURI())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(LocalDateTime.now(ZoneId.of(ZONE_BOGOTA)))
                         .build());
     }
 }
