@@ -154,7 +154,7 @@ class SolicitudServiceTest {
     void givenPageable_whenObtenerTodos_thenReturnPage() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
-        Mockito.when(solicitudRepository.findAll(pageable)).thenReturn(page);
+        Mockito.when(solicitudRepository.findAll(Mockito.any(Pageable.class))).thenReturn(page); // ← CAMBIO
 
         Page<SolicitudModel> resultado = solicitudService.obtenerTodos(pageable);
 

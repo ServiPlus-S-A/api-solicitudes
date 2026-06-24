@@ -3,6 +3,7 @@ package com.traceability.solicitudes.service;
 import com.traceability.solicitudes.model.AdjuntoModel;
 import com.traceability.solicitudes.model.SolicitudModel;
 import com.traceability.solicitudes.repository.AdjuntoRepository;
+import com.traceability.solicitudes.repository.SolicitudRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -11,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -23,6 +25,9 @@ class AdjuntoServiceTest {
 
     @Mock
     private AdjuntoRepository adjuntoRepository;
+
+    @Mock
+    private SolicitudRepository solicitudRepository; // ← AGREGADO
 
     @InjectMocks
     private AdjuntoService adjuntoService;
@@ -43,10 +48,11 @@ class AdjuntoServiceTest {
                 .tipoArchivo("PDF")
                 .build();
 
+        when(solicitudRepository.findById(1L)).thenReturn(Optional.of(mockSolicitud)); // ← AGREGADO
         when(adjuntoRepository.save(any(AdjuntoModel.class))).thenReturn(adjunto);
 
         // Act
-        AdjuntoModel resultado = adjuntoService.guardarAdjunto(adjunto);
+        AdjuntoModel resultado = adjuntoService.guardarAdjunto(adjunto, 1L); // ← AGREGADO el segundo argumento
 
         // Assert
         assertNotNull(resultado);
