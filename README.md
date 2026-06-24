@@ -1,96 +1,303 @@
-# API-SOLICITUDES (Equipo 3 - ServiPlus)
+# 📋 TraceAbility — Microservicio de Solicitudes
 
-Este repositorio contiene el **Microservicio de Gestión de Solicitudes** de la plataforma **ServiPlus**. El servicio está enfocado exclusivamente en la lógica de backend para la administración del ciclo de vida de las solicitudes de servicio, integrándose mediante llamadas resilientes a otros microservicios y exponiendo endpoints REST protegidos bajo autorización basada en roles (RBAC).
+> Microservicio REST para la gestión integral del ciclo de vida de solicitudes de servicio (soporte técnico, mantenimiento y consultoría), con asignación automática de consultores, caché distribuida y trazabilidad completa por auditoría.
 
-Jhoan Sebastian Fernandez
-
-Andres Perea
-
-Nicolas Mosorongo
-
----
-
-## 1. Descripción del Proyecto
-
-El microservicio de Gestión de Solicitudes permite a los usuarios registrar, consultar, actualizar y eliminar solicitudes de soporte o servicios técnicos dentro del ecosistema ServiPlus. 
-
-* **Framework principal**: Spring Boot 3.x
-* **Lenguaje**: Java 17 / 21
-* **Base de Datos**: PostgreSQL (Supabase en producción)
-* **Arquitectura**: Clean Architecture con diseño altamente desacoplado y de alta cohesión.
+[![Pipeline CI](https://img.shields.io/badge/pipeline-passing-brightgreen)]()
+[![Cobertura](https://img.shields.io/badge/cobertura-mínimo%2080%25-yellow)]()
+[![Versión](https://img.shields.io/badge/versión-1.3-blue)]()
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F?logo=springboot)]()
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)]()
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker)]()
 
 ---
 
-## 2. Arquitectura y Tecnologías
+## 📑 Tabla de contenidos
 
-El stack tecnológico e infraestructura clave del proyecto comprende:
-
-* **Spring Boot 3 (Web, Security, Actuator, Cache, Mail)**: Núcleo y soporte del framework para inyección de dependencias, seguridad perimetral delegada y caching declarativo.
-* **Spring Data JPA**: Abstracción para el mapeo relacional de objetos (ORM) y la persistencia en base de datos.
-* **Flyway**: Control de versiones de la base de datos y migraciones automáticas.
-* **PostgreSQL / Supabase**: Base de datos relacional para persistir la entidad `SolicitudModel`.
-* **Redis**: Caché distribuida de segundo nivel (L2) para optimizar el comportamiento temporal de las lecturas.
-* **Caffeine**: Caché local en memoria de primer nivel (L1).
-* **Resilience4J**: Implementación nativa del patrón *Circuit Breaker* y límites de tiempo (*Time Limiter*) en integraciones con clientes remotos.
-* **Lombok**: Generación automatizada de código redundante (getters, setters, constructores por inyección con `@RequiredArgsConstructor`).
-* **JUnit 5 & Mockito**: Suite de pruebas unitarias exhaustivas estructuradas bajo el patrón Given-When-Then.
-* **JaCoCo**: Generación de reportes de cobertura de código y validación automatizada de límites mínimos.
-* **OpenAPI / Swagger**: Documentación auto-generada del API REST expuesta en `/swagger-ui.html`.
+- [Descripción del proyecto](#descripción-del-proyecto)
+- [Arquitectura](#arquitectura)
+- [Stack tecnológico](#stack-tecnológico)
+- [Roles y funcionalidades](#roles-y-funcionalidades)
+- [Requisitos previos](#requisitos-previos)
+- [Instalación y ejecución local](#instalación-y-ejecución-local)
+- [Variables de entorno](#variables-de-entorno)
+- [Pipeline CI/CD](#pipeline-cicd)
+- [Convención de ramas](#convención-de-ramas)
+- [Cómo contribuir (Pull Request)](#cómo-contribuir-pull-request)
+- [Equipo](#equipo)
 
 ---
 
-## 3. Requisitos Previos
+## 📌 Descripción del proyecto
 
-Para ejecutar la aplicación localmente o compilar el proyecto en su entorno, asegúrese de contar con:
+**TraceAbility** es una plataforma modular de gestión de servicios tecnológicos. Este repositorio contiene **únicamente el microservicio de Solicitudes**, responsable de:
 
-* **Java 17 o superior** instalado y configurado en el `PATH` del sistema (el proyecto cuenta con toolchain configurado para Java 21).
-* **Docker / Docker Compose** (para levantar las instancias locales de PostgreSQL y Redis de forma automática).
-* O bien, accesos de red configurados a las instancias en la nube de **Supabase** y **Redis**.
+- Registro y ciclo de vida completo de solicitudes (Pendiente → Asignada → En Ejecución → Resuelta / Cancelada).
+- Asignación automática de consultores según capacitación y carga de trabajo.
+- Notificaciones asíncronas a clientes, consultores y coordinadores vía plataforma y correo.
 
----
-
-## 4. Variables de Entorno
-
-El microservicio utiliza variables de entorno del sistema para evitar quemar credenciales en texto plano. Configure las siguientes propiedades antes de iniciar el servicio:
-
-| Nombre de Variable | Propósito | Valor de Ejemplo / Local |
-| :--- | :--- | :--- |
-| `SPRING_DATASOURCE_URL` | URL de conexión JDBC a la base de datos PostgreSQL | `jdbc:postgresql://localhost:3050/solicitudes_db` |
-| `SPRING_DATASOURCE_USERNAME` | Usuario de la base de datos | `solicitudes_user` |
-| `SPRING_DATASOURCE_PASSWORD` | Contraseña de la base de datos | `solicitudes_pass` |
-| `SPRING_DATA_REDIS_HOST` | Dirección del servidor Redis | `localhost` |
-| `SPRING_DATA_REDIS_PORT` | Puerto de escucha del servidor Redis | `6379` |
-
-> [!TIP]
-> Puede duplicar el archivo `.env.example` ubicado en la raíz del proyecto, renombrarlo a `.env` y configurar sus variables locales allí.
+**Autores:** Andres Fernando Perea · Nicolas Mosorongo · Jhoan Sebastian Fernandez  
+**Fecha de creación:** 20 de Mayo de 2026 | **Versión DAS:** 1.1
 
 ---
 
-## 5. Instrucciones de Ejecución
+## 🏗️ Arquitectura
 
-El proyecto está configurado con **Gradle** como herramienta de construcción. Ejecute los siguientes comandos desde la terminal en la raíz del proyecto:
+El microservicio sigue una **arquitectura de capas** (Presentation → Service → Data Access) expuesto vía **Kong API Gateway** con autenticación JWT + RBAC.
 
-### A. Limpiar y compilar el proyecto (Validando estilo de código Checkstyle)
-```bash
-./gradlew clean compileJava checkstyleMain
+```
+Cliente / Consultor / Coordinador
+          │
+          ▼
+    Kong API Gateway  ──── JWT (RS256) + Rate Limiter + CORS
+          │
+          ▼
+ ┌────────────────────────────────────────────────────┐
+ │              Microservicio de Solicitudes          │
+ │                                                    │
+ │  Presentation Layer                                │
+ │    SolicitudController · ExportController          │
+ │    MetricsController   · FileController            │
+ │                                                    │
+ │  Service Layer                                     │
+ │    SolicitudService · ExportService                │
+ │    NotificationService · AuditService              │
+ │    CacheService      · AuthService                 │
+ │                                                    │
+ │  Data Access Layer                                 │
+ │    SolicitudRepository · FileRepository            │
+ │    JPA + PostgreSQL                                │
+ └────────────────────────────────────────────────────┘
+          │                    │
+          ▼                    ▼
+     PostgreSQL            Redis Cache
+                               │
+                          Caffeine (L1)
+
+ Frontend: Next.js 14
+   DashboardPage · SolicitudesPage · ReportesPage
+   DataTable · FiltersComponent
+   AuthContext · useSolicitudes · useMetrics · JWTInterceptor
 ```
 
-### B. Ejecutar las pruebas unitarias y generar reporte de cobertura JaCoCo
-```bash
-./gradlew test
-```
+---
 
-### C. Levantar la aplicación localmente
-```bash
-./gradlew bootRun
-```
-*La aplicación iniciará y estará disponible en el puerto `8085` bajo el contexto `/api` (ej. `http://localhost:8085/api/swagger-ui.html` para acceder a la documentación interactiva).*
+## 🛠️ Stack tecnológico
+
+| Capa | Tecnología |
+|------|-----------|
+| **Backend** | Spring Boot 3.x · Spring Security · Spring Cache · JPA/Hibernate |
+| **Frontend** | Next.js 14 · React · Zustand · Axios · SWR |
+| **Base de datos** | PostgreSQL |
+| **Caché** | Redis + Caffeine (multinivel) |
+| **API Gateway** | Kong Gateway |
+| **Seguridad** | JWT RS256 · RBAC · Rate Limiting · Spring Security |
+| **Testing** | JUnit · Mockito · Spring Boot Test |
+| **Documentación API** | Swagger / OpenAPI |
+| **Contenedores** | Docker · Kubernetes |
+| **Observabilidad** | SLF4J · Prometheus · Jaeger/DataDog |
+| **Notificaciones** | SMTP (correo) + WebSocket/SSE (plataforma) |
+| **Almacenamiento** | Bucket (S3/GCS) para adjuntos |
 
 ---
 
-## 6. Integración y Pipelines (CI/CD)
+## 👥 Roles y funcionalidades
 
-Este proyecto está preparado para ejecutarse en pipelines de integración continua (como GitHub Actions). Cada Pull Request o commit en la rama principal ejecuta:
-1. Compilación limpia y análisis Checkstyle para validar conformidad estricta del estilo del código.
-2. Suite de pruebas JUnit 5 de cobertura.
-3. **Verificación de JaCoCo (`jacocoTestCoverageVerification`)**: Se requiere obligatoriamente una cobertura mínima del **80%** de instrucciones cubiertas en el pipeline para permitir el despliegue del artefacto.
+El sistema maneja tres roles principales. A continuación un resumen de las historias de usuario por rol (Product Backlog v1.3):
+
+### 🧑 Cliente
+| HU | Funcionalidad | Prioridad |
+|----|--------------|-----------|
+| HU-01 | Registrar nueva solicitud de servicio con asignación automática de consultor | Must |
+| HU-02 | Visualizar historial personal de solicitudes | Must |
+| HU-03 | Filtrar solicitudes por estado, tipo, folio y rango de fechas | Must |
+| HU-04 | Cancelar solicitudes en estado Pendiente o Sin asignación | Should |
+| HU-05 | Ver detalle completo de una solicitud (solo lectura) | Must |
+| HU-06 | Agregar detalles y adjuntos a solicitudes abiertas | Could |
+| HU-07 | Recibir notificación automática de creación de solicitud | Could |
+| HU-08 | Recibir notificación automática de reasignación de consultor | Could |
+
+### 🗂️ Coordinador
+| HU | Funcionalidad | Prioridad |
+|----|--------------|-----------|
+| HU-09 | Ver estado de todas las solicitudes en tablero de control | Must |
+| HU-10 | Filtrar todas las solicitudes con criterios globales | Should |
+| HU-11 | Ver detalle de una solicitud específica | Must |
+| HU-12 | Cancelar solicitudes con motivo y tipo de falla | Should |
+| HU-13 | Reasignar consultor a solicitudes Pendientes o Sin asignación | Should |
+| HU-14 | Registrar notas de progreso y hallazgos técnicos | Could |
+| HU-15 | Recibir alertas de solicitudes sin asignación cada 4 horas | Should |
+
+### 🔧 Consultor
+| HU | Funcionalidad | Prioridad |
+|----|--------------|-----------|
+| HU-16 | Recibir notificación de asignación de solicitud | Should |
+| HU-17 | Ver lista de solicitudes asignadas | Must |
+| HU-18 | Filtrar solicitudes bajo su cargo | Should |
+| HU-19 | Ver detalle de una solicitud (solo lectura) | Must |
+| HU-20 | Cambiar estado de solicitud con resumen de atención | Must |
+| HU-21 | Registrar notas técnicas inmutables en bitácora | Could |
+
+---
+
+## ✅ Requisitos previos
+
+- Java 17+
+- Node.js 18+
+- Docker y Docker Compose
+- PostgreSQL 15+ (o vía Docker)
+- Redis 7+ (o vía Docker)
+- Maven 3.9+
+
+---
+
+## ⚙️ Instalación y ejecución local
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/org/traceability-solicitudes.git
+cd traceability-solicitudes
+```
+
+### 2. Configurar variables de entorno
+
+```bash
+cp .env.example .env
+# Editar .env con tus valores locales
+```
+
+### 3. Levantar infraestructura con Docker Compose
+
+```bash
+docker compose up -d postgres redis
+```
+
+### 4. Ejecutar el backend
+
+```bash
+./mvnw spring-boot:run
+# API disponible en http://localhost:8080
+# Swagger UI en http://localhost:8080/swagger-ui.html
+```
+
+### 5. Ejecutar el frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+# App disponible en http://localhost:3000
+```
+
+### 6. Ejecutar tests
+
+```bash
+# Backend
+./mvnw test
+
+# Frontend
+npm run test
+```
+
+---
+
+## 🔐 Variables de entorno
+
+Copia `.env.example` a `.env` y completa los valores. **Nunca comitees el `.env` con valores reales.**
+
+| Variable | Descripción | Requerida |
+|----------|-------------|-----------|
+| `DB_URL` | URL JDBC de PostgreSQL (ej: `jdbc:postgresql://localhost:5432/traceability`) | ✅ |
+| `DB_USERNAME` | Usuario de la base de datos | ✅ |
+| `DB_PASSWORD` | Contraseña de la base de datos | ✅ |
+| `REDIS_HOST` | Host del servidor Redis | ✅ |
+| `REDIS_PORT` | Puerto Redis (default: `6379`) | ✅ |
+| `JWT_PUBLIC_KEY` | Clave pública RSA para validación de tokens JWT | ✅ |
+| `SMTP_HOST` | Host del servidor de correo | ✅ |
+| `SMTP_PORT` | Puerto SMTP | ✅ |
+| `SMTP_USER` | Usuario SMTP | ✅ |
+| `SMTP_PASSWORD` | Contraseña SMTP | ✅ |
+| `STORAGE_BUCKET` | Nombre del bucket para adjuntos (S3/GCS) | ✅ |
+| `KONG_GATEWAY_URL` | URL del API Gateway | ✅ |
+| `LOG_LEVEL` | Nivel de logs: `info` / `debug` / `warn` | ❌ |
+| `CACHE_TTL_SECONDS` | TTL de caché (default: `300`) | ❌ |
+
+---
+
+## 🔄 Pipeline CI/CD
+
+El pipeline está configurado para ejecutarse automáticamente en cada push y merge request.
+
+| Stage | Descripción | Trigger |
+|-------|-------------|---------|
+| `lint` | Análisis estático (ESLint + Checkstyle) | Todo push |
+| `test` | Tests unitarios e integración (JUnit + Jest) | Todo push |
+| `sonar` | Análisis de calidad con SonarQube | Todo push a `develop` / `main` |
+| `build` | Build imagen Docker | Merge a `develop` o `main` |
+| `deploy-staging` | Deploy automático a staging | Merge a `develop` |
+| `deploy-prod` | Deploy a producción con aprobación manual | Tag `v*.*.*` |
+
+### Deploy a producción
+
+```bash
+# Crear y publicar tag de versión
+git tag v1.3.0
+git push origin v1.3.0
+```
+
+> **Regla:** No se permite merge a `main` si el pipeline no está en verde y sin la aprobación de al menos 1 reviewer.
+
+---
+
+## 🌿 Convención de ramas
+
+```
+main          ← producción (protegida)
+develop       ← integración (protegida)
+Nmosorongo    ← Desarrollo 
+Aperea        ← Desarrollo 
+Jfernandez    ← Desarrollo 
+```
+
+**Commits:** seguir [Conventional Commits](https://www.conventionalcommits.org/)
+
+```
+feat(solicitudes): agregar asignación automática de consultor HU-01
+fix(cache): corregir invalidación de caché en cancelación HU-04
+test(solicitud-service): agregar pruebas unitarias para cambio de estado
+chore(ci): actualizar imagen base de Docker a Java 17
+```
+
+---
+
+## 🤝 Cómo contribuir (Pull Request)
+
+Antes de abrir un PR asegúrate de:
+
+1. Crear la rama desde `develop`: `git checkout -b feature/HU-XX-mi-funcionalidad`
+2. Verificar que los tests pasan localmente: `./mvnw test && npm run test`
+3. Que el pipeline del repositorio está en verde
+4. Abrir el PR usando la **plantilla oficial del proyecto** (`.github/pull_request_template.md`)
+
+La plantilla solicita: descripción, ticket relacionado, tipo de cambio, cómo se probó, evidencia y checklist de calidad. Un PR sin la plantilla completa será rechazado durante la revisión.
+
+**Mínimo de aprobaciones:** 1 reviewer del equipo antes de hacer merge.
+
+---
+
+## 👥 Equipo
+
+| Nombre | 
+|--------|
+| Andres Fernando Perea |
+| Nicolas Mosorongo | 
+| Jhoan Sebastian Fernandez | 
+
+---
+
+> **Nota DevOps:** Este README es un artefacto vivo. Debe actualizarse en el mismo PR donde se modifique la arquitectura, se agreguen variables de entorno o cambie el proceso de despliegue. Un README desactualizado es deuda técnica.
+
+
+## Licencia
+
+Codigo privado - `UNLICENSED` (ver `package.json` en cada servicio).
