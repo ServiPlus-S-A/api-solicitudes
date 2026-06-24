@@ -23,13 +23,14 @@ import java.util.List;
  * Controlador REST encargado de exponer los endpoints de archivos adjuntos.
  */
 @RestController
-@RequestMapping("/api/adjuntos")
+@RequestMapping("/adjuntos")
 @RequiredArgsConstructor
 @Tag(name = "Adjuntos", description =
         "Operaciones para la gestión aislada de archivos vinculados a las solicitudes")
 public class AdjuntoController {
 
     private final AdjuntoService adjuntoService;
+
 
     /**
      * Endpoint HTTP POST para cargar y guardar un adjunto usando DTOs.
@@ -42,13 +43,15 @@ public class AdjuntoController {
     @ApiResponse(responseCode = "201", description = "Adjunto creado con éxito")
     @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o fallos de validación")
     public ResponseEntity<AdjuntoDTO> subirAdjunto(@RequestBody AdjuntoDTO adjuntoDto) {
-        // 1. Convertimos la instancia 'adjuntoDto' que llegó por HTTP a Entidad
+        // Obtenemos el ID del record
+        Long idSoli = adjuntoDto.idSolicitud();
+
+        // Convertimos DTO a Entidad
         AdjuntoModel entidad = adjuntoDto.toEntity();
 
-        // 2. Pasamos la entidad al servicio para que se guarde
-        AdjuntoModel guardado = adjuntoService.guardarAdjunto(entidad);
+        // Pasamos ambos al servicio (Ahora coincide con la firma corregida arriba)
+        AdjuntoModel guardado = adjuntoService.guardarAdjunto(entidad, idSoli);
 
-        // 3. Devolvemos el resultado transformado de nuevo a DTO
         return new ResponseEntity<>(AdjuntoDTO.fromEntity(guardado), HttpStatus.CREATED);
     }
 
