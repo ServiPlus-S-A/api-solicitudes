@@ -79,14 +79,6 @@ Cliente / Consultor / Coordinador
    AuthContext · useSolicitudes · useMetrics · JWTInterceptor
 ```
 
-### Decisiones arquitectónicas clave (ADRs)
-
-| ADR | Decisión | Justificación |
-|-----|----------|---------------|
-| ADR-001 | Redis + Caffeine para caché distribuida | TTL 5 min en lecturas, invalidación por escritura, compartido entre instancias |
-| ADR-006 | JWT RS256 + RBAC con `@PreAuthorize` | Autenticación stateless, clave pública en servicio, escalable horizontalmente |
-| — | Circuit Breaker con Resilience4j | Tolerancia a fallos en llamadas externas y timeouts |
-
 ---
 
 ## 🛠️ Stack tecnológico
