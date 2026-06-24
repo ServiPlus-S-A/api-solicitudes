@@ -51,6 +51,7 @@ class SolicitudRepositoryTest extends BaseIntegrationTest {
 
     @Test
     void givenCodigoTrazabilidad_whenFindByCodigoTrazabilidad_thenReturnSolicitud() {
+        // Arrange - 🚀 CORREGIDO: Usando el Enum real EstadoSolicitud.PENDIENTE
         SolicitudModel s = SolicitudModel.builder()
                 .idCliente(1L)
                 .idTipoServicio(1L)
