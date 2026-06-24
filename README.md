@@ -20,7 +20,7 @@
 | Business Logic          | Use Cases / Service Layer                    | Servicios Spring puros + `@Transactional`           |
 | Data Access             | Repository Pattern + ORM                     | Spring Data JPA + Hibernate                         |
 | Database Migrations     | Evolución Controlada del Esquema             | Flyway Migrations                                   |
-| Caching Layer           | Estrategia Híbrida L1 / L2 Cache-Aside       | Caffeine (L1) + Redis (L2)                          |
+| Caching Layer           | Cache-Aside con TTL Declarativo               | Redis (Spring Cache + `RedisCacheManager`)          |
 | Resilience              | Circuit Breaker & Time Limiter               | Resilience4j                                        |
 | Integration Testing     | Entornos Aislados Efímeros                   | JUnit 5 + Testcontainers (PostgreSQL / Redis)       |
 
