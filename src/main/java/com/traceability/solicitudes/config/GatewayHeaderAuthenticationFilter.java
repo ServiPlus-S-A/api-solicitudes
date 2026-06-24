@@ -1,5 +1,6 @@
 package com.traceability.solicitudes.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,7 +19,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Filtro que procesa la autenticación enviada en la cabecera por el API Gateway.
@@ -26,60 +26,63 @@ import java.util.stream.Collectors;
 public class GatewayHeaderAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(GatewayHeaderAuthenticationFilter.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String ROLE_PREFIX = "ROLE_";
 
     @Override
-    @SuppressWarnings("unchecked")
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            try {
-                String token = authHeader.substring(7);
-                String[] parts = token.split("\\.");
-                if (parts.length >= 2) {
-                    String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-                    Map<String, Object> claims = objectMapper.readValue(payloadJson, Map.class);
-                    
-                    Object rolesObj = claims.get("roles");
-                    if (rolesObj == null) {
-                        rolesObj = claims.get("authorities");
-                    }
-                    
-                    List<String> roles;
-                    if (rolesObj instanceof List) {
-                        roles = (List<String>) rolesObj;
-                    } else if (rolesObj instanceof String) {
-                        roles = Collections.singletonList((String) rolesObj);
-                    } else {
-                        roles = Collections.emptyList();
-                    }
-                    
-                    List<SimpleGrantedAuthority> authorities = roles.stream()
-                            .map(role -> {
-                                String cleanRole = role.toUpperCase();
-                                if (!cleanRole.startsWith("ROLE_")) {
-                                    cleanRole = "ROLE_" + cleanRole;
-                                }
-                                return new SimpleGrantedAuthority(cleanRole);
-                            })
-                            .collect(Collectors.toList());
-                    
-                    String subject = (String) claims.get("sub");
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                            subject, null, authorities
-                    );
-                    
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                    log.info("Usuario '{}' autenticado vía API Gateway con roles: {}", subject, roles);
-                }
-            } catch (Exception e) {
-                log.error("Fallo al autenticar a través del token del Gateway: {}", e.getMessage());
-                SecurityContextHolder.clearContext();
-            }
+            procesarAutenticacion(authHeader.substring(7));
         }
-        
+
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Extrae la lógica pesada a un método privado para reducir drásticamente la Complejidad Cognitiva (java:S3776).
+     */
+    private void procesarAutenticacion(String token) {
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length < 2) return;
+
+            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            Map<String, Object> claims = OBJECT_MAPPER.readValue(payloadJson, new TypeReference<Map<String, Object>>() {});
+
+            Object rolesObj = claims.get("roles") != null ? claims.get("roles") : claims.get("authorities");
+
+            // CORRECCIÓN S6880: Reemplazamos la cadena de if/else por una expresión Switch con Pattern Matching
+            List<String> roles = switch (rolesObj) {
+                case List<?> list -> list.stream().map(Object::toString).toList();
+                case String roleStr -> Collections.singletonList(roleStr);
+                default -> Collections.emptyList();
+            };
+
+            // CORRECCIÓN S6204: Cambiamos .collect(Collectors.toList()) por .toList() que es inmutable y limpio
+            List<SimpleGrantedAuthority> authorities = roles.stream()
+                    .map(role -> {
+                        String cleanRole = role.toUpperCase();
+                        if (!cleanRole.startsWith(ROLE_PREFIX)) {
+                            cleanRole = ROLE_PREFIX + cleanRole;
+                        }
+                        return new SimpleGrantedAuthority(cleanRole);
+                    })
+                    .toList();
+
+            String subject = (String) claims.get("sub");
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                    subject, null, authorities
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            log.info("Usuario '{}' autenticado vía API Gateway con roles: {}", subject, roles);
+
+        } catch (IOException | IllegalArgumentException e) {
+            log.error("Fallo al autenticar a través del token del Gateway", e);
+            SecurityContextHolder.clearContext();
+        }
     }
 }

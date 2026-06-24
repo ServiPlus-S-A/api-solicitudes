@@ -22,6 +22,7 @@ public class ServicioClient {
      * Método de fallback en caso de fallo o circuito abierto.
      */
     public String obtenerServicioFallback(Long idTipoServicio, Throwable t) {
+        log.warn("Activado fallback para servicio ID: {} debido a: {}", idTipoServicio, t.getMessage());
         return "Servicio ID: " + idTipoServicio + " (Fallback - Servicio de Catálogo fuera de servicio)";
     }
 }

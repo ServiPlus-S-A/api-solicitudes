@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Data
 @Builder
@@ -39,7 +40,7 @@ public class AsignacionModel {
     @PrePersist
     protected void onCreate() {
         if (this.fechaAsignacion == null) {
-            this.fechaAsignacion = LocalDateTime.now();
+            this.fechaAsignacion = LocalDateTime.now(ZoneId.of("America/Bogota"));
         }
     }
 }

@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
-public class AsignacionRepositoryTest extends BaseIntegrationTest {
+class AsignacionRepositoryTest extends BaseIntegrationTest {
 
     @Autowired
     private AsignacionRepository asignacionRepository;

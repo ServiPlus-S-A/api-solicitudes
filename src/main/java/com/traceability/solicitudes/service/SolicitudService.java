@@ -14,11 +14,11 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 /**
@@ -57,7 +57,7 @@ public class SolicitudService {
             );
         }
 
-        solicitud.setFechaApertura(LocalDateTime.now());
+        solicitud.setFechaApertura(LocalDateTime.now(ZoneId.of("America/Bogota")));
         if (solicitud.getEstado() == null) {
             solicitud.setEstado("Pendiente");
         }

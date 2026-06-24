@@ -10,7 +10,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.Optional;
 
-public class SolicitudRepositoryTest extends BaseIntegrationTest {
+class SolicitudRepositoryTest extends BaseIntegrationTest {
 
     @Autowired
     private SolicitudRepository solicitudRepository;

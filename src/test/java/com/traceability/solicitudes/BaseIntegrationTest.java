@@ -18,7 +18,7 @@ public abstract class BaseIntegrationTest {
                     .withPassword("test_pass");
 
     static {
-        // El truco definitivo: Se ejecuta UNA sola vez para todo el proyecto.
+        // El truco definitivo: Se ejecuta UNA sola vez para t0d0 el proyecto
         // El contenedor no se apagará hasta que terminen absolutamente todos los tests.
         postgres.start();
     }

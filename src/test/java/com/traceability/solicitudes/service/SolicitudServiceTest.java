@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
-public class SolicitudServiceTest {
+class SolicitudServiceTest {
 
     @Mock
     private SolicitudRepository solicitudRepository;

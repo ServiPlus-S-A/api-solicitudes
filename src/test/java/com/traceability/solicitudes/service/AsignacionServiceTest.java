@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,6 +22,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AsignacionServiceTest {
+
+    private static final LocalDateTime FECHA_TEST = LocalDateTime.of(2026, Month.JUNE, 23, 12, 0);
 
     @Mock
     private AsignacionRepository asignacionRepository;
@@ -39,7 +42,7 @@ class AsignacionServiceTest {
         AsignacionModel asignacion = AsignacionModel.builder()
                 .idSolicitud(1L)
                 .idConsultor(99L)
-                .fechaAsignacion(LocalDateTime.now())
+                .fechaAsignacion(FECHA_TEST)
                 .build();
 
         when(asignacionRepository.save(any(AsignacionModel.class))).thenReturn(asignacion);
@@ -61,14 +64,14 @@ class AsignacionServiceTest {
                 .id(101L)
                 .idSolicitud(idSolicitud)
                 .idConsultor(99L)
-                .fechaAsignacion(LocalDateTime.now())
+                .fechaAsignacion(FECHA_TEST)
                 .build();
 
         AsignacionModel asignacion2 = AsignacionModel.builder()
                 .id(102L)
                 .idSolicitud(idSolicitud)
                 .idConsultor(88L)
-                .fechaAsignacion(LocalDateTime.now())
+                .fechaAsignacion(FECHA_TEST)
                 .build();
 
         List<AsignacionModel> listaEsperada = Arrays.asList(asignacion1, asignacion2);
