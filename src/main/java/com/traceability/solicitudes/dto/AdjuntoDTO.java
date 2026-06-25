@@ -1,6 +1,9 @@
 package com.traceability.solicitudes.dto;
 
 import com.traceability.solicitudes.model.AdjuntoModel;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * DTO de transferencia de datos para la gestión de archivos adjuntos.
@@ -13,8 +16,15 @@ import com.traceability.solicitudes.model.AdjuntoModel;
  */
 public record AdjuntoDTO(
         Long id,
+
+        @NotNull(message = "El identificador de la solicitud (idSolicitud) es obligatorio")
         Long idSolicitud,
+
+        @NotBlank(message = "La URL del archivo (urlArchivo) no puede estar vacía")
+        @Size(max = 255, message = "La URL del archivo no puede superar los 255 caracteres")
         String urlArchivo,
+
+        @Size(max = 10, message = "El tipo de archivo no puede superar los 10 caracteres")
         String tipoArchivo
 ) {
     /**

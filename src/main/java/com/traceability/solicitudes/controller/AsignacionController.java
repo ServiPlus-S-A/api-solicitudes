@@ -18,7 +18,7 @@ import java.util.List;
  * Controlador REST encargado de gestionar los endpoints de asignaciones.
  */
 @RestController
-@RequestMapping("/api/asignaciones")
+@RequestMapping("/asignaciones")
 @RequiredArgsConstructor
 public class AsignacionController {
 

@@ -1,5 +1,6 @@
 package com.traceability.solicitudes.dto;
 
+import com.traceability.solicitudes.exception.BusinessException;
 import com.traceability.solicitudes.model.EstadoSolicitud;
 import com.traceability.solicitudes.model.SolicitudModel;
 import org.springframework.stereotype.Component;
@@ -21,15 +22,27 @@ public class SolicitudMapper {
         if (dto == null) {
             return null;
         }
+
+        // Control y parseo seguro del Estado
+        EstadoSolicitud estadoFinal = EstadoSolicitud.PENDIENTE;
+        if (dto.getEstado() != null && !dto.getEstado().isBlank()) {
+            try {
+                estadoFinal = EstadoSolicitud.valueOf(dto.getEstado().trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Al lanzar BusinessException, tu GlobalExceptionHandler lo atrapará limpiamente
+                throw new BusinessException("El estado '" + dto.getEstado() +
+                        "' proporcionado no es válido. " +
+                        "Valores aceptados: PENDIENTE, EN_PROCESO, RESUELTA, etc.");
+            }
+        }
+
         SolicitudModel solicitud = SolicitudModel.builder()
                 .idCliente(dto.getIdCliente())
                 .idTipoServicio(dto.getIdTipoServicio())
                 .asunto(dto.getAsunto())
                 .descripcion(dto.getDescripcion())
                 .ubicacion(dto.getUbicacion())
-                .estado(dto.getEstado() != null ?
-                        EstadoSolicitud.valueOf(dto.getEstado().toUpperCase()) :
-                        EstadoSolicitud.PENDIENTE)
+                .estado(estadoFinal)
                 .build();
 
         if (dto.getAdjuntos() != null) {
@@ -57,11 +70,9 @@ public class SolicitudMapper {
                 .fechaApertura(entity.getFechaApertura())
                 .codigoTrazabilidad(entity.getCodigoTrazabilidad())
                 .ubicacion(entity.getUbicacion())
-                .urlsAdjuntos(entity.getAdjuntos() !=null ?
+                .urlsAdjuntos(entity.getAdjuntos() != null ?
                         entity.getAdjuntos().stream().map(adj -> adj.getUrlArchivo()).toList() :
                         List.of())
                 .build();
-
-
     }
 }

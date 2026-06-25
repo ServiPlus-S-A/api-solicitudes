@@ -6,6 +6,7 @@ import com.traceability.solicitudes.service.AdjuntoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +43,7 @@ public class AdjuntoController {
             description = "Registra un archivo adjunto aislado vinculándolo a una solicitud")
     @ApiResponse(responseCode = "201", description = "Adjunto creado con éxito")
     @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o fallos de validación")
-    public ResponseEntity<AdjuntoDTO> subirAdjunto(@RequestBody AdjuntoDTO adjuntoDto) {
+    public ResponseEntity<AdjuntoDTO> subirAdjunto(@Valid @RequestBody AdjuntoDTO adjuntoDto) {
         // Obtenemos el ID del record
         Long idSoli = adjuntoDto.idSolicitud();
 
