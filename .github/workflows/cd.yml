@@ -19,7 +19,6 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Agregamos Buildx para habilitar las optimizaciones de caché avanzadas
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -35,15 +34,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      #Copia tu archivo docker-compose.yml al servidor para que siempre esté actualizado
-      - name: Copiar docker-compose.yml al servidor
+      - name: Copiar docker-compose.prod.yml al servidor
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ubuntu
           key: ${{ secrets.SSH_KEY }}
           port: 22
-          source: "docker-compose.yml"
+          source: "docker-compose.prod.yml"
           target: "/home/ubuntu/"
 
       - name: Desplegar en AWS EC2 via SSH
@@ -57,6 +55,8 @@ jobs:
             set -e
             echo ">>> Conectado al EC2. Iniciando actualización del stack..."
             cd /home/ubuntu
+            
+            mv -f docker-compose.prod.yml docker-compose.yml
             
             echo ">>> Autenticando en Docker Hub desde el servidor..."
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
@@ -75,7 +75,6 @@ jobs:
             
             SUCCESS=0
             for i in $(seq 1 12); do
-              # CORREGIDO: Se añade /api y flags de timeout seguro
               STATUS=$(curl --max-time 5 -s -o /dev/null -w "%{http_code}" http://localhost:9180/api/actuator/health || echo "000")
             
               if [ "$STATUS" = "200" ]; then
