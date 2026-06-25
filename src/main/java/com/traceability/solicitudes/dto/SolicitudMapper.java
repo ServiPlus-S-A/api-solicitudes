@@ -1,7 +1,11 @@
 package com.traceability.solicitudes.dto;
 
+import com.traceability.solicitudes.exception.BusinessException;
+import com.traceability.solicitudes.model.EstadoSolicitud;
 import com.traceability.solicitudes.model.SolicitudModel;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * Mapeador entre DTOs y Entidad de Solicitudes.
@@ -18,16 +22,33 @@ public class SolicitudMapper {
         if (dto == null) {
             return null;
         }
-        return SolicitudModel.builder()
+
+        // Control y parseo seguro del Estado
+        EstadoSolicitud estadoFinal = EstadoSolicitud.PENDIENTE;
+        if (dto.getEstado() != null && !dto.getEstado().isBlank()) {
+            try {
+                estadoFinal = EstadoSolicitud.valueOf(dto.getEstado().trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Al lanzar BusinessException, tu GlobalExceptionHandler lo atrapará limpiamente
+                throw new BusinessException("El estado '" + dto.getEstado() +
+                        "' proporcionado no es válido. " +
+                        "Valores aceptados: PENDIENTE, EN_PROCESO, RESUELTA, etc.");
+            }
+        }
+
+        SolicitudModel solicitud = SolicitudModel.builder()
                 .idCliente(dto.getIdCliente())
                 .idTipoServicio(dto.getIdTipoServicio())
                 .asunto(dto.getAsunto())
                 .descripcion(dto.getDescripcion())
-                .estado(dto.getEstado() != null ? dto.getEstado() : "Pendiente")
-                // 🚀 OJO: Si agregaste 'ubicacion' en tu SolicitudRequestDTO, descomenta la siguiente línea:
-                // .ubicacion(dto.getUbicacion())
-                // ❌ SE QUITA: .urlAdjunto(dto.getUrlAdjunto()) ya no va aquí
+                .ubicacion(dto.getUbicacion())
+                .estado(estadoFinal)
                 .build();
+
+        if (dto.getAdjuntos() != null) {
+            dto.getAdjuntos().forEach(adjunto -> solicitud.addAdjunto(adjunto.toEntity()));
+        }
+        return solicitud;
     }
 
     /**
@@ -45,12 +66,13 @@ public class SolicitudMapper {
                 .idTipoServicio(entity.getIdTipoServicio())
                 .asunto(entity.getAsunto())
                 .descripcion(entity.getDescripcion())
-                .estado(entity.getEstado())
+                .estado(entity.getEstado() != null ? entity.getEstado().name() : "PENDIENTE")
                 .fechaApertura(entity.getFechaApertura())
                 .codigoTrazabilidad(entity.getCodigoTrazabilidad())
-                // 🚀 OJO: Si tu SolicitudResponseDTO manx|eja 'ubicacion', descomenta la siguiente línea:
-                // .ubicacion(entity.getUbicacion())
-                // ❌ SE QUITA: .urlAdjunto(entity.getUrlAdjunto()) ya no va aquí
+                .ubicacion(entity.getUbicacion())
+                .urlsAdjuntos(entity.getAdjuntos() != null ?
+                        entity.getAdjuntos().stream().map(adj -> adj.getUrlArchivo()).toList() :
+                        List.of())
                 .build();
     }
 }

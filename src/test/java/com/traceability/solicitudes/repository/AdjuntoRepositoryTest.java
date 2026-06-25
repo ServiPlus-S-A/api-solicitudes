@@ -32,13 +32,13 @@ class AdjuntoRepositoryTest extends BaseIntegrationTest {
 
         // Ahora asociamos el adjunto al ID real generado por la base de datos
         AdjuntoModel adjunto = AdjuntoModel.builder()
-                .idSolicitud(solicitudGuardada.getId()) // 👈 Usamos el ID real de la FK
+                .solicitud(solicitudGuardada)
                 .urlArchivo("https://s3.amazonaws.com/archivo.pdf")
                 .build();
         adjuntoRepository.save(adjunto);
 
         // Act
-        List<AdjuntoModel> result = adjuntoRepository.findByIdSolicitud(solicitudGuardada.getId());
+        List<AdjuntoModel> result = adjuntoRepository.findBySolicitudId(solicitudGuardada.getId());
 
         // Assert
         Assertions.assertFalse(result.isEmpty());

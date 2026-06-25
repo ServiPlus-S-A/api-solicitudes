@@ -1,5 +1,6 @@
 package com.traceability.solicitudes.repository;
 
+import com.traceability.solicitudes.model.EstadoSolicitud;
 import com.traceability.solicitudes.model.SolicitudModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,5 +44,5 @@ public interface SolicitudRepository extends JpaRepository<SolicitudModel, Long>
      * @param pageable opciones de paginación
      * @return página de solicitudes encontradas
      */
-    Page<SolicitudModel> findAllByEstado(String estado, Pageable pageable);
+    Page<SolicitudModel> findAllByEstado(EstadoSolicitud estado, Pageable pageable);
 }

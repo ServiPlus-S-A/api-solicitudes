@@ -1,9 +1,13 @@
 package com.traceability.solicitudes.service;
 
+import com.traceability.solicitudes.dto.SolicitudMapper;
+import com.traceability.solicitudes.dto.SolicitudRequestDTO;
+import com.traceability.solicitudes.dto.SolicitudResponseDTO;
 import com.traceability.solicitudes.exception.BusinessException;
 import com.traceability.solicitudes.exception.ResourceNotFoundException;
 import com.traceability.solicitudes.integration.ClienteClient;
 import com.traceability.solicitudes.integration.ServicioClient;
+import com.traceability.solicitudes.model.EstadoSolicitud;
 import com.traceability.solicitudes.model.SolicitudModel;
 import com.traceability.solicitudes.repository.SolicitudRepository;
 import org.junit.jupiter.api.Assertions;
@@ -17,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -24,43 +29,51 @@ import java.util.Optional;
 @ExtendWith(MockitoExtension.class)
 class SolicitudServiceTest {
 
-    @Mock
-    private SolicitudRepository solicitudRepository;
-
-    @Mock
-    private ClienteClient clienteClient;
-
-    @Mock
-    private ServicioClient servicioClient;
-
-    @Mock
-    private NotificationService notificationService;
-
-    @Mock
-    private MetricService metricService;
+    @Mock private SolicitudRepository solicitudRepository;
+    @Mock private ClienteClient clienteClient;
+    @Mock private ServicioClient servicioClient;
+    @Mock private NotificationService notificationService;
+    @Mock private MetricService metricService;
+    @Mock private SolicitudMapper solicitudMapper;
 
     @InjectMocks
     private SolicitudService solicitudService;
 
     @Test
     void givenValidSolicitud_whenCrear_thenReturnCreada() {
-        SolicitudModel solicitud = SolicitudModel.builder()
+        SolicitudRequestDTO requestDTO = SolicitudRequestDTO.builder()
                 .idCliente(1L)
                 .idTipoServicio(2L)
                 .asunto("Soporte de Conexión")
                 .descripcion("Problemas con la red principal")
+                .estado("PENDIENTE")
+                .build();
+
+        SolicitudModel modelMapped = SolicitudModel.builder()
+                .idCliente(1L)
+                .idTipoServicio(2L)
+                .asunto("Soporte de Conexión")
+                .descripcion("Problemas con la red principal")
+                .estado(EstadoSolicitud.PENDIENTE)
+                .build();
+
+        SolicitudResponseDTO responseDTO = SolicitudResponseDTO.builder()
+                .id(100L)
+                .codigoTrazabilidad("TR-ABC12345")
                 .build();
 
         Mockito.when(clienteClient.obtenerCliente(1L)).thenReturn("Cliente 1 info");
         Mockito.when(servicioClient.obtenerServicio(2L)).thenReturn("Servicio 2 info");
+        Mockito.when(solicitudMapper.toEntity(requestDTO)).thenReturn(modelMapped);
         Mockito.when(solicitudRepository.findByCodigoTrazabilidad(Mockito.anyString())).thenReturn(Optional.empty());
         Mockito.when(solicitudRepository.save(Mockito.any(SolicitudModel.class))).thenAnswer(invocation -> {
-            SolicitudModel model = invocation.getArgument(0);
-            model.setId(100L);
-            return model;
+            SolicitudModel savedModel = invocation.getArgument(0);
+            savedModel.setId(100L);
+            return savedModel;
         });
+        Mockito.when(solicitudMapper.toResponse(Mockito.any(SolicitudModel.class))).thenReturn(responseDTO);
 
-        SolicitudModel resultado = solicitudService.crear(solicitud);
+        SolicitudResponseDTO resultado = solicitudService.crear(requestDTO);
 
         Assertions.assertNotNull(resultado);
         Assertions.assertEquals(100L, resultado.getId());
@@ -70,7 +83,12 @@ class SolicitudServiceTest {
 
     @Test
     void givenSolicitudWithDuplicateCode_whenCrear_thenThrowBusinessException() {
-        SolicitudModel solicitud = SolicitudModel.builder()
+        SolicitudRequestDTO requestDTO = SolicitudRequestDTO.builder()
+                .idCliente(1L)
+                .idTipoServicio(2L)
+                .build();
+
+        SolicitudModel modelMapped = SolicitudModel.builder()
                 .idCliente(1L)
                 .idTipoServicio(2L)
                 .codigoTrazabilidad("TR-DUP")
@@ -78,9 +96,10 @@ class SolicitudServiceTest {
 
         Mockito.when(clienteClient.obtenerCliente(1L)).thenReturn("Cliente 1 info");
         Mockito.when(servicioClient.obtenerServicio(2L)).thenReturn("Servicio 2 info");
-        Mockito.when(solicitudRepository.findByCodigoTrazabilidad("TR-DUP")).thenReturn(Optional.of(solicitud));
+        Mockito.when(solicitudMapper.toEntity(requestDTO)).thenReturn(modelMapped);
+        Mockito.when(solicitudRepository.findByCodigoTrazabilidad("TR-DUP")).thenReturn(Optional.of(modelMapped));
 
-        Assertions.assertThrows(BusinessException.class, () -> solicitudService.crear(solicitud));
+        Assertions.assertThrows(BusinessException.class, () -> solicitudService.crear(requestDTO));
     }
 
     @Test
@@ -129,9 +148,30 @@ class SolicitudServiceTest {
     void givenPageable_whenObtenerTodos_thenReturnPage() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
-        Mockito.when(solicitudRepository.findAll(pageable)).thenReturn(page);
+        Mockito.when(solicitudRepository.findAll(Mockito.any(Pageable.class))).thenReturn(page);
 
         Page<SolicitudModel> resultado = solicitudService.obtenerTodos(pageable);
+
+        Assertions.assertEquals(1, resultado.getTotalElements());
+    }
+
+    @Test
+    void givenNullPageable_whenObtenerTodos_thenReturnPageWithDefaultSort() {
+        Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
+        Mockito.when(solicitudRepository.findAll(Mockito.any(Pageable.class))).thenReturn(page);
+
+        Page<SolicitudModel> resultado = solicitudService.obtenerTodos(null);
+
+        Assertions.assertEquals(1, resultado.getTotalElements());
+    }
+
+    @Test
+    void givenPageableWithInvalidSort_whenObtenerTodos_thenReturnPageWithDefaultSort() {
+        Pageable pageableInvalido = PageRequest.of(0, 10, Sort.by("campoInexistente"));
+        Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
+        Mockito.when(solicitudRepository.findAll(Mockito.any(Pageable.class))).thenReturn(page);
+
+        Page<SolicitudModel> resultado = solicitudService.obtenerTodos(pageableInvalido);
 
         Assertions.assertEquals(1, resultado.getTotalElements());
     }
@@ -156,26 +196,36 @@ class SolicitudServiceTest {
     }
 
     @Test
-    void givenClienteIdAndPageable_whenBuscarPorCliente_thenReturnPage() {
-        Long idCliente = 55L;
-        Pageable pageable = PageRequest.of(0, 10);
+    void givenValidPageable_whenBuscarPorCliente_thenReturnPage() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("id").descending());
         Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
-        Mockito.when(solicitudRepository.findAllByIdCliente(idCliente, pageable)).thenReturn(page);
+        Mockito.when(solicitudRepository.findAllByIdCliente(
+                Mockito.eq(1L), Mockito.any(Pageable.class))
+        ).thenReturn(page);
 
-        Page<SolicitudModel> resultado = solicitudService.buscarPorCliente(idCliente, pageable);
+        Page<SolicitudModel> resultado = solicitudService.buscarPorCliente(1L, pageable);
 
         Assertions.assertEquals(1, resultado.getTotalElements());
     }
 
     @Test
-    void givenEstadoAndPageable_whenBuscarPorEstado_thenReturnPage() {
-        String estado = "Pendiente";
-        Pageable pageable = PageRequest.of(0, 10);
+    void givenValidEstado_whenBuscarPorEstado_thenReturnPage() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("id").descending());
         Page<SolicitudModel> page = new PageImpl<>(Collections.singletonList(new SolicitudModel()));
-        Mockito.when(solicitudRepository.findAllByEstado(estado, pageable)).thenReturn(page);
+        Mockito.when(solicitudRepository.findAllByEstado(
+                Mockito.eq(EstadoSolicitud.PENDIENTE), Mockito.any(Pageable.class))
+        ).thenReturn(page);
 
-        Page<SolicitudModel> resultado = solicitudService.buscarPorEstado(estado, pageable);
+        Page<SolicitudModel> resultado = solicitudService.buscarPorEstado("PENDIENTE", pageable);
 
         Assertions.assertEquals(1, resultado.getTotalElements());
+    }
+
+    @Test
+    void givenInvalidEstado_whenBuscarPorEstado_thenThrowBusinessException() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Assertions.assertThrows(BusinessException.class,
+                () -> solicitudService.buscarPorEstado("ESTADO_INVALIDO", pageable));
     }
 }

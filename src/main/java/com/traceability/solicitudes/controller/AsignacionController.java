@@ -13,13 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Controlador REST encargado de gestionar los endpoints de asignaciones.
  */
 @RestController
-@RequestMapping("/api/asignaciones")
+@RequestMapping("/asignaciones")
 @RequiredArgsConstructor
 public class AsignacionController {
 
@@ -51,7 +50,7 @@ public class AsignacionController {
         List<AsignacionDTO> dtos = asignacionService.obtenerPorSolicitud(idSolicitud)
                 .stream()
                 .map(AsignacionDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
 
         return ResponseEntity.ok(dtos);
     }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 import java.time.LocalDateTime;
 
@@ -23,5 +24,6 @@ public class SolicitudResponseDTO {
     private String estado;
     private LocalDateTime fechaApertura;
     private String codigoTrazabilidad;
-    private String urlAdjunto;
+    private String ubicacion;
+    private List<String> urlsAdjuntos;
 }
