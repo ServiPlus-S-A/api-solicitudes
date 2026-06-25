@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controlador REST para la gestión de solicitudes.
  */
 @RestController
-@RequestMapping("/api/solicitudes")
+@RequestMapping("/solicitudes")
 @RequiredArgsConstructor
 @Tag(name = "Solicitudes", description = "Operaciones de CRUD de solicitudes para TraceAbility")
 public class SolicitudController {
@@ -54,10 +54,11 @@ public class SolicitudController {
     @ApiResponse(responseCode = "409", description = "Conflicto por código de trazabilidad duplicado")
     public ResponseEntity<SolicitudResponseDTO> crear(@Valid @RequestBody final SolicitudRequestDTO requestDTO) {
         log.info("REST solicitud para crear recurso por cliente: {}", requestDTO.getIdCliente());
-        SolicitudModel entity = solicitudMapper.toEntity(requestDTO);
-        SolicitudModel creada = solicitudService.crear(entity);
-        log.info("REST solicitud completada: ID {}", creada.getId());
-        return new ResponseEntity<>(solicitudMapper.toResponse(creada), HttpStatus.CREATED);
+
+        SolicitudResponseDTO respuesta = solicitudService.crear(requestDTO);
+
+        log.info("REST solicitud completada con éxito");
+        return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
     }
 
     /**
@@ -90,7 +91,7 @@ public class SolicitudController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Eliminar solicitud", description = "Elimina físicamente una solicitud del sistema")
-    @ApiResponse(responseCode = "244", description = "Solicitud eliminada con éxito")
+    @ApiResponse(responseCode = "204", description = "Solicitud eliminada con éxito")
     @ApiResponse(responseCode = "404", description = "Solicitud no encontrada")
     public ResponseEntity<Void> eliminar(@PathVariable final Long id) {
         log.info("REST solicitud para eliminar ID: {}", id);
@@ -138,7 +139,8 @@ public class SolicitudController {
      * @return página de DTOs de respuesta
      */
     @GetMapping("/cliente/{idCliente}")
-    @PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
+    //seguridad a nivel de datos, solo pasa si es admin o si el cliente consulta su propio ID
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('CLIENTE') and #idCliente == authentication.principal.id)")
     @Operation(summary = "Buscar por cliente", description = "Listado de solicitudes asociadas a un ID de cliente")
     @ApiResponse(responseCode = "200", description = "Lista devuelta exitosamente")
     public ResponseEntity<Page<SolicitudResponseDTO>> buscarPorCliente(

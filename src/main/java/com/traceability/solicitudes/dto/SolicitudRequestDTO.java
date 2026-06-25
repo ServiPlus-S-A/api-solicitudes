@@ -1,5 +1,6 @@
 package com.traceability.solicitudes.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -7,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 /**
  * DTO para recibir el payload de creación y edición de solicitudes.
@@ -30,8 +32,12 @@ public class SolicitudRequestDTO {
     @NotBlank(message = "La descripción es obligatoria")
     private String descripcion;
 
-    @Size(max = 20, message = "El estado no debe superar los 20 caracteres")
+    @NotBlank(message = "La ubicación es obligatoria")
+    @Size(max = 100, message = "La ubicación no puede superar los 100 caracteres")
+    private String ubicacion;
+
     private String estado;
 
-    private String urlAdjunto;
+    @Valid
+    private List<AdjuntoDTO> adjuntos;
 }
