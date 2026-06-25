@@ -57,7 +57,7 @@ jobs:
           retention-days: 7
 
       - name: Qodo — revisión automática del PR
-        uses: Codium-ai/pr-agent@main
+        uses: Codium-ai/pr-agent@v0.22
         if: github.event_name == 'pull_request'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

@@ -91,7 +91,7 @@ public class SolicitudController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Eliminar solicitud", description = "Elimina físicamente una solicitud del sistema")
-    @ApiResponse(responseCode = "244", description = "Solicitud eliminada con éxito")
+    @ApiResponse(responseCode = "204", description = "Solicitud eliminada con éxito")
     @ApiResponse(responseCode = "404", description = "Solicitud no encontrada")
     public ResponseEntity<Void> eliminar(@PathVariable final Long id) {
         log.info("REST solicitud para eliminar ID: {}", id);

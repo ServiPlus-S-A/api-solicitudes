@@ -2,7 +2,8 @@ package com.traceability.solicitudes.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -35,9 +36,14 @@ public class CacheConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
-        // Esto le permite a Redis guardar el tipo de clase y saber cómo reconstruir la entidad al leerla
+        // Corrección de seguridad: Restringir subtipos permitidos solo a nuestro paquete base
+        PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType("com.traceability.solicitudes")
+                .build();
+
+        // Esto le permite a Redis guardar el tipo de clase de forma segura
         objectMapper.activateDefaultTyping(
-                LaissezFaireSubTypeValidator.instance,
+                ptv,
                 ObjectMapper.DefaultTyping.NON_FINAL,
                 JsonTypeInfo.As.PROPERTY
         );
