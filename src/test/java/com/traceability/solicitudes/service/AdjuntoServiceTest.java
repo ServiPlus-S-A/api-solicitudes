@@ -76,10 +76,13 @@ class AdjuntoServiceTest {
     void cuandoObtenerPorSolicitud_entoncesRetornaListaDeAdjuntos() {
         SolicitudModel mockSolicitud = SolicitudModel.builder().id(1L).build();
 
-        AdjuntoModel adjunto1 = AdjuntoModel.builder().solicitud(mockSolicitud).urlArchivo("url1").tipoArchivo("JPG").build();
-        AdjuntoModel adjunto2 = AdjuntoModel.builder().solicitud(mockSolicitud).urlArchivo("url2").tipoArchivo("PNG").build();
+        AdjuntoModel adjunto1 = AdjuntoModel.builder().solicitud(
+                mockSolicitud).urlArchivo("url1").tipoArchivo("JPG").build();
+        AdjuntoModel adjunto2 = AdjuntoModel.builder().solicitud(
+                mockSolicitud).urlArchivo("url2").tipoArchivo("PNG").build();
 
-        when(adjuntoRepository.findBySolicitudId(1L)).thenReturn(Arrays.asList(adjunto1, adjunto2));
+        when(adjuntoRepository.findBySolicitudId(1L)).thenReturn(
+                Arrays.asList(adjunto1, adjunto2));
 
         List<AdjuntoModel> resultado = adjuntoService.obtenerPorSolicitud(1L);
 
