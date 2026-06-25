@@ -139,7 +139,8 @@ public class SolicitudController {
      * @return página de DTOs de respuesta
      */
     @GetMapping("/cliente/{idCliente}")
-    @PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
+    //seguridad a nivel de datos, solo pasa si es admin o si el cliente consulta su propio ID
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('CLIENTE') and #idCliente == authentication.principal.id)")
     @Operation(summary = "Buscar por cliente", description = "Listado de solicitudes asociadas a un ID de cliente")
     @ApiResponse(responseCode = "200", description = "Lista devuelta exitosamente")
     public ResponseEntity<Page<SolicitudResponseDTO>> buscarPorCliente(
