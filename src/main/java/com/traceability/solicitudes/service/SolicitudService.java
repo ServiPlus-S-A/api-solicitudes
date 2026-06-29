@@ -1,10 +1,13 @@
 package com.traceability.solicitudes.service;
 
+import com.traceability.solicitudes.dto.SolicitudMapper;
+import com.traceability.solicitudes.dto.SolicitudRequestDTO;
+import com.traceability.solicitudes.dto.SolicitudResponseDTO;
 import com.traceability.solicitudes.exception.BusinessException;
 import com.traceability.solicitudes.exception.ResourceNotFoundException;
 import com.traceability.solicitudes.integration.ClienteClient;
 import com.traceability.solicitudes.integration.ServicioClient;
-import com.traceability.solicitudes.model.SolicitudEstados;
+import com.traceability.solicitudes.model.EstadoSolicitud;
 import com.traceability.solicitudes.model.SolicitudModel;
 import com.traceability.solicitudes.repository.AsignacionRepository;
 import com.traceability.solicitudes.repository.SolicitudRepository;
@@ -13,14 +16,16 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -39,23 +44,26 @@ public class SolicitudService {
     private final ServicioClient servicioClient;
     private final NotificationService notificationService;
     private final MetricService metricService;
+    private final SolicitudMapper solicitudMapper;
 
     /**
      * Procesa la creación de una nueva solicitud validando clientes y servicios remotos.
      * Genera automáticamente un código único de trazabilidad si no se suministra uno.
      *
-     * @param solicitud Modelo inicial enviado para el registro
+     * @param  dto Modelo inicial enviado para el registro
      * @return SolicitudModel guardada con éxito en la base de datos
      * @throws BusinessException si el código de trazabilidad generado ya está registrado
      */
     @Transactional
     @CircuitBreaker(name = "solicitudService")
-    public SolicitudModel crear(final SolicitudModel solicitud) {
-        log.info("Procesando creación de solicitud para cliente ID: {}", solicitud.getIdCliente());
+    public SolicitudResponseDTO crear(final SolicitudRequestDTO dto) {
+        log.info("Procesando creación de solicitud para cliente ID: {}", dto.getIdCliente());
 
-        String clienteInfo = clienteClient.obtenerCliente(solicitud.getIdCliente());
-        String servicioInfo = servicioClient.obtenerServicio(solicitud.getIdTipoServicio());
+        String clienteInfo = clienteClient.obtenerCliente(dto.getIdCliente());
+        String servicioInfo = servicioClient.obtenerServicio(dto.getIdTipoServicio());
         log.info("Validación externa exitosa: {} | {}", clienteInfo, servicioInfo);
+
+        SolicitudModel solicitud = solicitudMapper.toEntity(dto);
 
         if (solicitud.getCodigoTrazabilidad() == null || solicitud.getCodigoTrazabilidad().isBlank()) {
             solicitud.setCodigoTrazabilidad("TR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
@@ -70,7 +78,7 @@ public class SolicitudService {
 
         solicitud.setFechaApertura(LocalDateTime.now(ZoneId.of("America/Bogota")));
         if (solicitud.getEstado() == null) {
-            solicitud.setEstado(SolicitudEstados.PENDIENTE);
+            solicitud.setEstado(EstadoSolicitud.PENDIENTE);
         }
 
         SolicitudModel creada = solicitudRepository.save(solicitud);
@@ -82,7 +90,7 @@ public class SolicitudService {
                 "Su solicitud con el código de trazabilidad " + creada.getCodigoTrazabilidad() + " ha sido guardada."
         );
 
-        return creada;
+        return solicitudMapper.toResponse(creada);
     }
 
     /**
@@ -91,7 +99,6 @@ public class SolicitudService {
      *
      * @param solicitud Entidad con los datos modificados para actualizar
      * @return SolicitudModel actualizada y guardada
-     * @throws ResourceNotFoundException si el identificador de la solicitud no existe
      */
     @Transactional
     @CacheEvict(value = "solicitudes", key = "'solicitud:' + #solicitud.id")
@@ -127,7 +134,6 @@ public class SolicitudService {
      * Desaloja también la caché asignada a dicho registro.
      *
      * @param id Identificador único de la solicitud a borrar
-     * @throws ResourceNotFoundException si no se encuentra el ID
      */
     @Transactional
     @CacheEvict(value = "solicitudes", key = "'solicitud:' + #id")
@@ -142,15 +148,15 @@ public class SolicitudService {
 
     /**
      * Obtiene el listado total de solicitudes sin restricciones de propiedad.
-     * Destinado al rol de coordinador (ADMIN).
+     * Destinado al rol de coordinador (ADMIN). Sanea paginación corrupta de Swagger.
      *
      * @param pageable Configuración de paginación
      * @return Página de resultados estructurada en SolicitudModel
      */
     @Transactional(readOnly = true)
-    public Page<SolicitudModel> listarTodas(Pageable pageable) {
+    public Page<SolicitudModel> listarTodas(final Pageable pageable) {
         log.info("Consultando listado total de solicitudes (coordinador): {}", pageable);
-        return solicitudRepository.findAll(pageable);
+        return solicitudRepository.findAll(sanearPageable(pageable));
     }
 
     /**
@@ -176,7 +182,7 @@ public class SolicitudService {
             throw new BusinessException("Solo el cliente propietario puede cancelar la solicitud");
         }
 
-        if (!SolicitudEstados.PENDIENTE.equalsIgnoreCase(existente.getEstado())) {
+        if (existente.getEstado() != EstadoSolicitud.PENDIENTE) {
             throw new BusinessException(
                     "Solo se puede cancelar una solicitud en estado PENDIENTE. Estado actual: "
                             + existente.getEstado()
@@ -187,7 +193,7 @@ public class SolicitudService {
             throw new BusinessException("No se puede cancelar una solicitud que ya fue asignada");
         }
 
-        existente.setEstado(SolicitudEstados.CANCELADA);
+        existente.setEstado(EstadoSolicitud.CANCELADA);
         SolicitudModel cancelada = solicitudRepository.save(existente);
         metricService.incrementarContador("solicitudes.canceladas");
 
@@ -201,43 +207,75 @@ public class SolicitudService {
     }
 
     /**
-     * Recupera una solicitud específica por su ID. Utiliza caché de Spring (L1/L2).
+     * Recupera una solicitud específica por su ID.
      *
      * @param id Identificador único de búsqueda
      * @return SolicitudModel correspondiente
-     * @throws ResourceNotFoundException si el recurso solicitado no existe
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "solicitudes", key = "'solicitud:' + #id")
-    public SolicitudModel obtenerPorId(Long id) {
-        log.info("Buscando solicitud ID: {} (Fallo de caché L1/L2)", id);
+    public SolicitudModel obtenerPorId(final Long id) {
+        log.info("Buscando solicitud ID: {}", id);
         return solicitudRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada con id: " + id));
     }
 
     /**
-     * Busca y pagina solicitudes asociadas a un cliente específico.
+     * Busca y pagina solicitudes asociadas a un cliente específico de manera segura.
      *
      * @param idCliente Identificador de cliente para el filtrado
      * @param pageable  Configuración de paginación
      * @return Página con las solicitudes que coinciden con el cliente
      */
     @Transactional(readOnly = true)
-    public Page<SolicitudModel> buscarPorCliente(Long idCliente, Pageable pageable) {
+    public Page<SolicitudModel> buscarPorCliente(final Long idCliente, final Pageable pageable) {
         log.info("Consultando solicitudes por cliente ID {} paginado", idCliente);
-        return solicitudRepository.findAllByIdCliente(idCliente, pageable);
+        return solicitudRepository.findAllByIdCliente(idCliente, sanearPageable(pageable));
     }
 
     /**
-     * Filtra y obtiene solicitudes basadas en su estado actual.
+     * Filtra y obtiene solicitudes basadas en su estado actual de manera segura.
+     * Convierte el parámetro de texto al ENUM correspondiente y sanea la paginación.
      *
-     * @param estado   Estado a buscar (ej: 'Pendiente', 'Resuelto')
+     * @param estado   Estado a buscar en formato String (ej: 'pendiente', 'en_proceso')
      * @param pageable Configuración de paginación
      * @return Página con los resultados filtrados por estado
      */
     @Transactional(readOnly = true)
-    public Page<SolicitudModel> buscarPorEstado(String estado, Pageable pageable) {
+    public Page<SolicitudModel> buscarPorEstado(final String estado, final Pageable pageable) {
         log.info("Consultando solicitudes por estado '{}' paginado", estado);
-        return solicitudRepository.findAllByEstado(estado, pageable);
+
+        EstadoSolicitud estadoEnum;
+        try {
+            estadoEnum = EstadoSolicitud.valueOf(estado.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("El estado suministrado '" + estado
+                    + "' no es un estado válido en el sistema.");
+        }
+
+        return solicitudRepository.findAllByEstado(estadoEnum, sanearPageable(pageable));
+    }
+
+    /**
+     * Método utilitario privado para sanear el Pageable y evitar que parámetros corruptos
+     * u ordenamientos vacíos ("string", "[]") rompan las consultas SQL.
+     */
+    private Pageable sanearPageable(final Pageable pageable) {
+        if (pageable == null) {
+            return PageRequest.of(0, 10, Sort.by("id").descending());
+        }
+
+        final Set<String> camposPermitidos = Set.of(
+                "id", "idCliente", "idTipoServicio", "asunto",
+                "descripcion", "estado", "fechaApertura", "codigoTrazabilidad", "ubicacion"
+        );
+
+        boolean tieneOrdenInvalido = pageable.getSort().stream()
+                .anyMatch(order -> !camposPermitidos.contains(order.getProperty()));
+
+        if (pageable.getSort().isUnsorted() || tieneOrdenInvalido) {
+            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id").descending());
+        }
+
+        return pageable;
     }
 }

@@ -5,18 +5,18 @@ spring:
     name: microservicio-solicitudes
 
   # Supabase PostgreSQL Configuration
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+ # datasource:
+  #  url: ${SPRING_DATASOURCE_URL}
+   # username: ${SPRING_DATASOURCE_USERNAME}
+    #password: ${SPRING_DATASOURCE_PASSWORD}
+    #driver-class-name: org.postgresql.Driver
     # HikariCP connection pool optimization
-    hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-      idle-timeout: 300000
-      connection-timeout: 20000
-      max-lifetime: 1200000
+    #hikari:
+    #  maximum-pool-size: 20
+     # minimum-idle: 5
+     # idle-timeout: 300000
+     # connection-timeout: 20000
+     # max-lifetime: 1200000
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
