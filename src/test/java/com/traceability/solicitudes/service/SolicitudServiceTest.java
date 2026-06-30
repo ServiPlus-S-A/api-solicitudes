@@ -206,10 +206,9 @@ class SolicitudServiceTest {
 
         Mockito.when(solicitudRepository.findById(id)).thenReturn(Optional.of(solicitud));
         Mockito.when(asignacionRepository.existsByIdSolicitud(id)).thenReturn(false);
-        Mockito.when(solicitudRepository.save(Mockito.any(SolicitudModel.class))).thenAnswer(invocation -> {
-            SolicitudModel model = invocation.getArgument(0);
-            return model;
-        });
+        Mockito.when(solicitudRepository.save(Mockito.any(SolicitudModel.class))).thenAnswer(invocation ->
+                invocation.getArgument(0)
+        );
 
         SolicitudModel resultado = solicitudService.cancelar(id, idCliente);
 
