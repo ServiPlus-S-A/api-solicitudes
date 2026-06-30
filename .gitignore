@@ -10,6 +10,8 @@ application-dev.yml
 application-test.yml
 .env
 .secrets
+docker/keys/*.pem
+!docker/keys/.gitkeep
 # STS
 .apt_generated
 .classpath
