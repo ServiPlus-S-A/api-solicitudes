@@ -9,6 +9,7 @@ import com.traceability.solicitudes.integration.ClienteClient;
 import com.traceability.solicitudes.integration.ServicioClient;
 import com.traceability.solicitudes.model.EstadoSolicitud;
 import com.traceability.solicitudes.model.SolicitudModel;
+import com.traceability.solicitudes.repository.AsignacionRepository;
 import com.traceability.solicitudes.repository.SolicitudRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -37,11 +39,14 @@ public class SolicitudService {
     private static final Logger log = LoggerFactory.getLogger(SolicitudService.class);
 
     private final SolicitudRepository solicitudRepository;
+    private final AsignacionRepository asignacionRepository;
     private final ClienteClient clienteClient;
     private final ServicioClient servicioClient;
     private final NotificationService notificationService;
     private final MetricService metricService;
     private final SolicitudMapper solicitudMapper;
+    private static final String PREFIX_CLIENTE = "cliente_";
+    private static final String DOMINIO_EMAIL = "@traceability.com";
 
     /**
      * Procesa la creación de una nueva solicitud validando clientes y servicios remotos.
@@ -82,7 +87,7 @@ public class SolicitudService {
         metricService.incrementarContador("solicitudes.creadas");
 
         notificationService.enviarNotificacion(
-                "cliente_" + creada.getIdCliente() + "@traceability.com",
+                PREFIX_CLIENTE + creada.getIdCliente() + DOMINIO_EMAIL,
                 "Registro de Solicitud Exitosa",
                 "Su solicitud con el código de trazabilidad " + creada.getCodigoTrazabilidad() + " ha sido guardada."
         );
@@ -118,7 +123,7 @@ public class SolicitudService {
         metricService.incrementarContador("solicitudes.actualizadas");
 
         notificationService.enviarNotificacion(
-                "cliente_" + actualizada.getIdCliente() + "@traceability.com",
+                PREFIX_CLIENTE + actualizada.getIdCliente() + DOMINIO_EMAIL,
                 "Solicitud Actualizada",
                 "Su solicitud " + actualizada.getCodigoTrazabilidad() + " ha sido actualizada."
         );
@@ -144,16 +149,63 @@ public class SolicitudService {
     }
 
     /**
-     * Obtiene una lista paginada de todas las solicitudes registradas.
-     * Blinda la ejecución contra ordenamientos vacíos o corruptos de Swagger.
+     * Obtiene el listado total de solicitudes sin restricciones de propiedad.
+     * Destinado al rol de coordinador (ADMIN). Sanea paginación corrupta de Swagger.
      *
      * @param pageable Configuración de paginación
      * @return Página de resultados estructurada en SolicitudModel
      */
     @Transactional(readOnly = true)
-    public Page<SolicitudModel> obtenerTodos(final Pageable pageable) {
-        log.info("Consultando todas las solicitudes paginadas: {}", pageable);
+    public Page<SolicitudModel> listarTodas(final Pageable pageable) {
+        log.info("Consultando listado total de solicitudes (coordinador): {}", pageable);
         return solicitudRepository.findAll(sanearPageable(pageable));
+    }
+
+    /**
+     * Cancela una solicitud del cliente cuando aún se encuentra pendiente y sin asignación.
+     *
+     * @param id        Identificador de la solicitud
+     * @param idCliente Identificador del cliente autenticado
+     * @return SolicitudModel actualizada a estado Cancelada
+     * @throws ResourceNotFoundException si la solicitud no existe
+     * @throws BusinessException         si no cumple las reglas de cancelación
+     */
+    @Transactional
+    @CacheEvict(value = "solicitudes", key = "'solicitud:' + #id")
+    public SolicitudModel cancelar(final Long id, final Long idCliente) {
+        log.info("Procesando cancelación de solicitud ID {} por cliente {}", id, idCliente);
+
+        SolicitudModel existente = solicitudRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Solicitud con id " + id + " no encontrada"
+                ));
+
+        if (!existente.getIdCliente().equals(idCliente)) {
+            throw new BusinessException("Solo el cliente propietario puede cancelar la solicitud");
+        }
+
+        if (existente.getEstado() != EstadoSolicitud.PENDIENTE) {
+            throw new BusinessException(
+                    "Solo se puede cancelar una solicitud en estado PENDIENTE. Estado actual: "
+                            + existente.getEstado()
+            );
+        }
+
+        if (asignacionRepository.existsByIdSolicitud(id)) {
+            throw new BusinessException("No se puede cancelar una solicitud que ya fue asignada");
+        }
+
+        existente.setEstado(EstadoSolicitud.CANCELADA);
+        SolicitudModel cancelada = solicitudRepository.save(existente);
+        metricService.incrementarContador("solicitudes.canceladas");
+
+        notificationService.enviarNotificacion(
+                PREFIX_CLIENTE + cancelada.getIdCliente() + DOMINIO_EMAIL,
+                "Solicitud Cancelada",
+                "Su solicitud " + cancelada.getCodigoTrazabilidad() + " ha sido cancelada."
+        );
+
+        return cancelada;
     }
 
     /**
@@ -194,43 +246,34 @@ public class SolicitudService {
     public Page<SolicitudModel> buscarPorEstado(final String estado, final Pageable pageable) {
         log.info("Consultando solicitudes por estado '{}' paginado", estado);
 
-        // 1. Convertimos el String de forma segura al ENUM mapeado.
-        // Si mandan basura que no existe en el Enum,
-        // arrojamos un error de negocio controlado (Evita el 500)
         EstadoSolicitud estadoEnum;
         try {
             estadoEnum = EstadoSolicitud.valueOf(estado.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new BusinessException("El estado suministrado '" + estado +
-                    "' no es un estado válido en el sistema.");
+            throw new BusinessException("El estado suministrado '" + estado
+                    + "' no es un estado válido en el sistema.");
         }
 
-        // 2. Enviamos el ENUM real y el pageable saneado al repositorio
-        // NOTA: Si tu repositorio recibe un String, cambia 'estadoEnum' por 'estadoEnum.name()'
         return solicitudRepository.findAllByEstado(estadoEnum, sanearPageable(pageable));
     }
 
     /**
      * Método utilitario privado para sanear el Pageable y evitar que parámetros corruptos
      * u ordenamientos vacíos ("string", "[]") rompan las consultas SQL.
-     * Cumple estrictamente con los estándares de SonarCloud.
      */
     private Pageable sanearPageable(final Pageable pageable) {
         if (pageable == null) {
             return PageRequest.of(0, 10, Sort.by("id").descending());
         }
 
-        // 1. LISTA BLANCA: Solo estos campos reales de tu SolicitudModel pueden ser ordenados
-        final java.util.Set<String> camposPermitidos = java.util.Set.of(
+        final Set<String> camposPermitidos = Set.of(
                 "id", "idCliente", "idTipoServicio", "asunto",
                 "descripcion", "estado", "fechaApertura", "codigoTrazabilidad", "ubicacion"
         );
 
-        // 2. Evaluamos si el cliente está intentando ordenar por algo que NO está en la lista blanca
         boolean tieneOrdenInvalido = pageable.getSort().stream()
                 .anyMatch(order -> !camposPermitidos.contains(order.getProperty()));
 
-        // 3. Si no hay orden o detectamos basura como [""] o "string", forzamos el orden seguro por ID
         if (pageable.getSort().isUnsorted() || tieneOrdenInvalido) {
             return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id").descending());
         }

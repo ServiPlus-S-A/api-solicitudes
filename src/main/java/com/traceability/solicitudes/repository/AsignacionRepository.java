@@ -18,4 +18,11 @@ public interface AsignacionRepository extends JpaRepository<AsignacionModel, Lon
      * @return lista de asignaciones de la solicitud
      */
     List<AsignacionModel> findByIdSolicitud(Long idSolicitud);
+
+    /**
+     * Indica si la solicitud ya tiene al menos una asignación registrada.
+     * @param idSolicitud identificador de la solicitud objetivo
+     * @return true si existe alguna asignación
+     */
+    boolean existsByIdSolicitud(Long idSolicitud);
 }
