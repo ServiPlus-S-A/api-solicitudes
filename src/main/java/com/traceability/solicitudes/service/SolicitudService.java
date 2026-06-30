@@ -45,6 +45,8 @@ public class SolicitudService {
     private final NotificationService notificationService;
     private final MetricService metricService;
     private final SolicitudMapper solicitudMapper;
+    private static final String PREFIX_CLIENTE = "cliente_";
+    private static final String DOMINIO_EMAIL = "@traceability.com";
 
     /**
      * Procesa la creación de una nueva solicitud validando clientes y servicios remotos.
@@ -85,7 +87,7 @@ public class SolicitudService {
         metricService.incrementarContador("solicitudes.creadas");
 
         notificationService.enviarNotificacion(
-                "cliente_" + creada.getIdCliente() + "@traceability.com",
+                PREFIX_CLIENTE + creada.getIdCliente() + DOMINIO_EMAIL,
                 "Registro de Solicitud Exitosa",
                 "Su solicitud con el código de trazabilidad " + creada.getCodigoTrazabilidad() + " ha sido guardada."
         );
@@ -121,7 +123,7 @@ public class SolicitudService {
         metricService.incrementarContador("solicitudes.actualizadas");
 
         notificationService.enviarNotificacion(
-                "cliente_" + actualizada.getIdCliente() + "@traceability.com",
+                PREFIX_CLIENTE + actualizada.getIdCliente() + DOMINIO_EMAIL,
                 "Solicitud Actualizada",
                 "Su solicitud " + actualizada.getCodigoTrazabilidad() + " ha sido actualizada."
         );
@@ -198,7 +200,7 @@ public class SolicitudService {
         metricService.incrementarContador("solicitudes.canceladas");
 
         notificationService.enviarNotificacion(
-                "cliente_" + cancelada.getIdCliente() + "@traceability.com",
+                PREFIX_CLIENTE + cancelada.getIdCliente() + DOMINIO_EMAIL,
                 "Solicitud Cancelada",
                 "Su solicitud " + cancelada.getCodigoTrazabilidad() + " ha sido cancelada."
         );

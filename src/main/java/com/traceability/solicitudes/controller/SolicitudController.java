@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -50,7 +49,7 @@ public class SolicitudController {
      * @return DTO de respuesta con la solicitud creada
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
+    //@PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
     @Operation(summary = "Crear solicitud", description = "Registra una nueva solicitud en el sistema")
     @ApiResponse(responseCode = "201", description = "Solicitud creada con éxito")
     @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
@@ -71,7 +70,7 @@ public class SolicitudController {
      * @return DTO de respuesta
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('TECNICO', 'ADMIN')")
+    //@PreAuthorize("hasAnyRole('TECNICO', 'ADMIN')")
     @Operation(summary = "Actualizar solicitud", description = "Modifica una solicitud existente")
     @ApiResponse(responseCode = "200", description = "Solicitud actualizada con éxito")
     @ApiResponse(responseCode = "404", description = "Solicitud no encontrada")
@@ -92,7 +91,7 @@ public class SolicitudController {
      * @return no content
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Eliminar solicitud", description = "Elimina físicamente una solicitud del sistema")
     @ApiResponse(responseCode = "204", description = "Solicitud eliminada con éxito")
     @ApiResponse(responseCode = "404", description = "Solicitud no encontrada")
@@ -109,7 +108,7 @@ public class SolicitudController {
      * @return página de DTOs de respuesta
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Listar todas las solicitudes",
             description = "Obtiene el listado total de solicitudes para el coordinador")
@@ -127,7 +126,7 @@ public class SolicitudController {
      * @return DTO de respuesta con la solicitud cancelada
      */
     @PatchMapping("/{id}/cancelar")
-    @PreAuthorize("hasRole('CLIENTE')")
+    //@PreAuthorize("hasRole('CLIENTE')")
     @Operation(
             summary = "Cancelar solicitud",
             description = "Permite al cliente cancelar una solicitud en estado Pendiente")
@@ -147,7 +146,7 @@ public class SolicitudController {
      * @return DTO de respuesta
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('CLIENTE', 'TECNICO', 'ADMIN')")
+    //@PreAuthorize("hasAnyRole('CLIENTE', 'TECNICO', 'ADMIN')")
     @Operation(summary = "Obtener solicitud por ID", description = "Retorna una solicitud en base a su ID")
     @ApiResponse(responseCode = "200", description = "Detalles de la solicitud obtenidos exitosamente")
     @ApiResponse(responseCode = "404", description = "Solicitud no encontrada")
@@ -165,7 +164,7 @@ public class SolicitudController {
      */
     @GetMapping("/cliente/{idCliente}")
     //seguridad a nivel de datos, solo pasa si es admin o si el cliente consulta su propio ID
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('CLIENTE') and #idCliente == authentication.principal.id)")
+    //@PreAuthorize("hasRole('ADMIN') or (hasRole('CLIENTE') and #idCliente == authentication.principal.id)")
     @Operation(summary = "Buscar por cliente", description = "Listado de solicitudes asociadas a un ID de cliente")
     @ApiResponse(responseCode = "200", description = "Lista devuelta exitosamente")
     public ResponseEntity<Page<SolicitudResponseDTO>> buscarPorCliente(
@@ -183,7 +182,7 @@ public class SolicitudController {
      * @return página de DTOs de respuesta
      */
     @GetMapping("/estado/{estado}")
-    @PreAuthorize("hasAnyRole('TECNICO', 'ADMIN')")
+    //@PreAuthorize("hasAnyRole('TECNICO', 'ADMIN')")
     @Operation(summary = "Buscar por estado", description = "Listado de solicitudes en un estado específico")
     @ApiResponse(responseCode = "200", description = "Lista devuelta exitosamente")
     public ResponseEntity<Page<SolicitudResponseDTO>> buscarPorEstado(
